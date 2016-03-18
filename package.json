@@ -4,7 +4,7 @@
   "description": "REST for PostGres",
   "main": "api.js",
   "scripts": {
-    "start": "node api.js",
+    "start": "node standalone.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "sylvain.verly@gmail.com",
