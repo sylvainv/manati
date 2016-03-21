@@ -11,4 +11,4 @@ var config = _.defaults(require('config'), {
 var app = require('./index.js')(config.get('dsn'), config.get('allowed_origin'));
 console.log('Running on',config.port);
 
-app.server.listen(config.port);
+app.start(config.port);

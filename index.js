@@ -113,6 +113,10 @@ class App {
 
     this.initRouter();
   }
+
+  start(port) {
+    this.server.listen(port);
+  }
 }
 
 module.exports = function(dsn, allowedOrigin) {
