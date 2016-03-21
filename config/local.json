@@ -1,4 +1,3 @@
 {
-  "dsn": "DATABASE_URL",
-  "port": 3232
+  "dsn": "postgres://sylvain@localhost:5432/eic_cms"
 }

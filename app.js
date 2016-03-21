@@ -7,20 +7,18 @@ var Boom = require('boom');
 var pgPromise = require('pg-promise')(/*options*/);
 
 class App {
-  constructor(options) {
-    this.dsn = options.dsn;
-    this.port = options.port;
-    this.allowedOrigin = options.allowedOrigin;
-    this.app = require('koa')();
+  constructor(dsn, allowedOrigin) {
+    this.dsn = dsn;
+    this.allowedOrigin = allowedOrigin;
+    this.server = require('koa')();
 
     this.initLogger();
-
-    this.initApp();
+    this.init();
   }
 
   initLogger() {
     var bunyan = require('bunyan');
-    this.logger = bunyan.createLogger({name: "pg-rest-api", streams: [
+    this.logger = bunyan.createLogger({name: "manati", streams: [
       {
         level: 'info',
         stream: process.stdout            // log INFO and above to stdout
@@ -30,11 +28,11 @@ class App {
 
   initRouter() {
     var router = require('koa-router')();
-    this.app.context.db = pgPromise(this.dsn);
+    this.server.context.db = pgPromise(this.dsn);
 
-    var fetchData = require('./lib/fetch')(this.app.context.db, this.logger);
-    var addData = require('./lib/add')(this.app.context.db, this.logger);
-    var updateData = require('./lib/update')(this.app.context.db, this.logger);
+    var fetchData = require('./lib/fetch')(this.server.context.db, this.logger);
+    var addData = require('./lib/add')(this.server.context.db, this.logger);
+    var updateData = require('./lib/update')(this.server.context.db, this.logger);
 
     // TABLE
     router.param('table', function * checkTableIsNotInternal(table, next) {
@@ -69,7 +67,7 @@ class App {
       this.body = yield updateData(this.table, this.request.body, this.request.query);
     });
 
-    this.app
+    this.server
       .use(router.routes())
       .use(router.allowedMethods({
         throw: true,
@@ -78,50 +76,45 @@ class App {
       }));
   }
 
-  initApp() {
-    if (this.app.env !== 'production') {
-      this.app.use(require('koa-logger')());
+  init() {
+    if (this.server.env !== 'production' || this.server.env !== 'prod') {
+      this.server.use(require('koa-logger')());
     }
 
     // CORS
-    this.app.use(cors({
-      origin: '*',
+    this.server.use(cors({
+      origin: this.allowedOrigin,
       methods: ['GET', 'POST', 'PATCH', 'OPTIONS']
     }));
 
     // PARSE BODY
-    this.app.use(require('koa-parse-json')());
+    this.server.use(require('koa-parse-json')());
 
     // ERROR LOGGER
-    this.app.on('error', function (err, ctx) {
+    this.server.on('error', function (err, ctx) {
       this.logger.error(err);
     });
 
-    // ERROR HANDLER
     var self = this;
-    this.app.use(function* errorHandler(next) {
+    // ERROR HANDLER
+    this.server.use(function* errorHandler(next) {
       try {
         yield next;
       } catch (err) {
-        var message;
+        self.logger.error(err);
 
         // if status is undefined and routine is defined, let's assume it's a postgresql error
-        var pgError = require('./lib/pgErrorHandler')(err);
-        self.logger.error(pgError);
+        var error = require('./lib/pgErrorHandler')(err);
 
-        this.body = JSON.stringify(pgError.output.payload);
+        this.status = error.output.statusCode;
+        this.body = error.output.payload;
       }
     });
 
     this.initRouter();
   }
-
-  start() {
-    this.logger.info('Connecting to localhost:%d', this.port);
-    this.app.listen(this.port);
-  }
 }
 
-module.exports = function(config) {
-  return new App(config);
+module.exports = function(dsn, allowedOrigin) {
+  return new App(dsn, allowedOrigin);
 };
