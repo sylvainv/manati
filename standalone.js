@@ -8,7 +8,7 @@ var config = _.defaults(require('config'), {
   port: 3000
 });
 
-var app = require('./app.js')(config.get('dsn'), config.get('allowed_origin'));
+var app = require('./index.js')(config.get('dsn'), config.get('allowed_origin'));
 console.log('Running on',config.port);
 
 app.server.listen(config.port);
