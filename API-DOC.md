@@ -74,7 +74,6 @@ Content-Type: application/json
 ]
 ```
 
-
 ## `PUT /data/:table` Update data from a table
 
 This will update ALL data related to the query you are making, so you must provide a "column"
@@ -83,7 +82,8 @@ parameter to filter down the data, otherwise the query will fail
 ### Parameters
 
 * column Literally any column that is in the table, this can be queried using
-column=operator.value (e.g. name=eq.Letsface). Possible operator are: <ul>
+column=operator.value (e.g. name=eq.Letsface). Possible operator are:
+
   * eq: equal
   * neq: non equal
   * gt: greater than
