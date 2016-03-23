@@ -10,10 +10,9 @@ class App {
   constructor(dsn, allowedOrigin) {
     this.dsn = dsn;
     this.allowedOrigin = allowedOrigin;
-    this.server = require('koa')();
+    this.koa = require('koa')();
 
     this.initLogger();
-    this.init();
   }
 
   initLogger() {
@@ -28,11 +27,11 @@ class App {
 
   initRouter() {
     var router = require('koa-router')();
-    this.server.context.db = pgPromise(this.dsn);
+    this.koa.context.db = pgPromise(this.dsn);
 
-    var fetchData = require('./lib/fetch')(this.server.context.db, this.logger);
-    var addData = require('./lib/add')(this.server.context.db, this.logger);
-    var updateData = require('./lib/update')(this.server.context.db, this.logger);
+    var fetchData = require('./lib/fetch')(this.koa.context.db, this.logger);
+    var addData = require('./lib/add')(this.koa.context.db, this.logger);
+    var updateData = require('./lib/update')(this.koa.context.db, this.logger);
 
     // TABLE
     router.param('table', function * checkTableIsNotInternal(table, next) {
@@ -67,7 +66,7 @@ class App {
       this.body = yield updateData(this.table, this.request.body, this.request.query);
     });
 
-    this.server
+    this.koa
       .use(router.routes())
       .use(router.allowedMethods({
         throw: true,
@@ -77,27 +76,27 @@ class App {
   }
 
   init() {
-    if (this.server.env !== 'production' || this.server.env !== 'prod') {
-      this.server.use(require('koa-logger')());
+    if (this.koa.env !== 'production' || this.koa.env !== 'prod') {
+      this.koa.use(require('koa-logger')());
     }
 
     // CORS
-    this.server.use(cors({
+    this.koa.use(cors({
       origin: this.allowedOrigin,
       methods: ['GET', 'POST', 'PATCH', 'OPTIONS']
     }));
 
     // PARSE BODY
-    this.server.use(require('koa-parse-json')());
+    this.koa.use(require('koa-parse-json')());
 
     // ERROR LOGGER
-    this.server.on('error', function (err, ctx) {
+    this.koa.on('error', function (err, ctx) {
       this.logger.error(err);
     });
 
     var self = this;
     // ERROR HANDLER
-    this.server.use(function* errorHandler(next) {
+    this.koa.use(function* errorHandler(next) {
       try {
         yield next;
       } catch (err) {
@@ -115,7 +114,7 @@ class App {
   }
 
   start(port) {
-    this.server.listen(port);
+    this.koa.listen(port);
   }
 }
 
