@@ -89,24 +89,20 @@ class App {
     // PARSE BODY
     this.koa.use(require('koa-parse-json')());
 
-    // ERROR LOGGER
-    this.koa.on('error', function (err, ctx) {
-      this.logger.error(err);
-    });
-
+    var koa = this.koa;
     var self = this;
     // ERROR HANDLER
     this.koa.use(function* errorHandler(next) {
       try {
         yield next;
       } catch (err) {
-        self.logger.error(err);
-
-        // if status is undefined and routine is defined, let's assume it's a postgresql error
         var error = require('./lib/pgErrorHandler')(err);
 
         this.status = error.output.statusCode;
-        this.body = error.output.payload;
+        this.type = 'json';
+        this.body = JSON.stringify(error.output.payload);
+
+        self.logger.error(err);
       }
     });
 

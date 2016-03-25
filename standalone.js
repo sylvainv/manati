@@ -8,7 +8,8 @@ var config = _.defaults(require('config'), {
   port: 3000
 });
 
-var app = require('./index.js')(config.get('dsn'), config.get('allowed_origin'));
+var app = require('./index.js')(process.env.DATABASE_URL, config.get('allowed_origin'));
 console.log('Running on',config.port);
 
+app.init();
 app.start(config.port);
