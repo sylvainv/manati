@@ -96,13 +96,13 @@ class App {
       try {
         yield next;
       } catch (err) {
+        self.logger.error(err);
+
         var error = require('./lib/pgErrorHandler')(err);
 
         this.status = error.output.statusCode;
         this.type = 'json';
         this.body = JSON.stringify(error.output.payload);
-
-        self.logger.error(err);
       }
     });
 
