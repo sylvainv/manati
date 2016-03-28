@@ -16,3 +16,7 @@ app.koa.use(function* (next) {
 app.init();
 app.start(3000);
 ```
+
+## Debugging queries
+
+* NODE_LOG_LEVEL = ['info', 'debug', 'error']

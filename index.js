@@ -19,7 +19,7 @@ class App {
     var bunyan = require('bunyan');
     this.logger = bunyan.createLogger({name: "manati", streams: [
       {
-        level: 'info',
+        level: process.env.NODE_LOG_LEVEL || 'info',
         stream: process.stdout            // log INFO and above to stdout
       }
     ]});
