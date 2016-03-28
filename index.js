@@ -114,6 +114,6 @@ class App {
   }
 }
 
-module.exports = function(dsn, allowedOrigin) {
-  return new App(dsn, allowedOrigin);
+module.exports = function(dsn, allowedOrigin, logLevel) {
+  return new App(dsn, allowedOrigin, logLevel);
 };
