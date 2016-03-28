@@ -6,7 +6,11 @@ REST API for PostgreSQL. Forget ORM!
 
 ```javascript
 var manati = require('manati');
-var app = manati(process.env.DATABASE_URL || 'postgres://user@localhost/database', 'www.example.com');
+var app = manati(
+  process.env.DATABASE_URL || 'postgres://user@localhost/database', // your database connection string
+  'www.example.com', // the domain allow to do cross-request
+  'info' // the minumum log level that will be output
+);
 
 // Manati uses KoaJS, if you want to extend it to your needs you can use (see http://koajs.com/ for more info)
 app.koa.use(function* (next) {
@@ -16,7 +20,3 @@ app.koa.use(function* (next) {
 app.init();
 app.start(3000);
 ```
-
-## Debugging queries
-
-* NODE_LOG_LEVEL = ['info', 'debug', 'error']

@@ -7,19 +7,19 @@ var Boom = require('boom');
 var pgPromise = require('pg-promise')(/*options*/);
 
 class App {
-  constructor(dsn, allowedOrigin) {
+  constructor(dsn, allowedOrigin, logLevel) {
     this.dsn = dsn;
     this.allowedOrigin = allowedOrigin;
     this.koa = require('koa')();
 
-    this.initLogger();
+    this.initLogger(logLevel);
   }
 
-  initLogger() {
+  initLogger(logLevel) {
     var bunyan = require('bunyan');
     this.logger = bunyan.createLogger({name: "manati", streams: [
       {
-        level: process.env.NODE_LOG_LEVEL || 'info',
+        level: logLevel || 'info',
         stream: process.stdout            // log INFO and above to stdout
       }
     ]});
