@@ -3,6 +3,8 @@
 
 var _ = require('lodash');
 
+var cors = require('koa-cors');
+
 var config = _.defaults(require('config'), {
   dsn: 'postgres://postgres@localhost:5432/postgres',
   port: 3000
@@ -10,10 +12,14 @@ var config = _.defaults(require('config'), {
 
 var app = require('./index.js')(
   process.env.DATABASE_URL,
-  config.get('allowed_origin'),
   process.env.LOG_LEVEL
 );
-console.log('Running on',config.port);
+
+// CORS
+app.koa.use(cors({
+  origin: config.get('allowed_origin'),
+  methods: ['GET', 'POST', 'PATCH', 'OPTIONS']
+}));
 
 app.init();
 app.start(config.port);

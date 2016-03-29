@@ -1,6 +1,5 @@
 "use strict";
 
-var cors = require('koa-cors');
 var _ = require('lodash');
 var Boom = require('boom');
 
@@ -9,7 +8,6 @@ var pgPromise = require('pg-promise')(/*options*/);
 class App {
   constructor(dsn, allowedOrigin, logLevel) {
     this.dsn = dsn;
-    this.allowedOrigin = allowedOrigin;
     this.koa = require('koa')();
 
     this.initLogger(logLevel);
@@ -80,12 +78,6 @@ class App {
       this.koa.use(require('koa-logger')());
     }
 
-    // CORS
-    this.koa.use(cors({
-      origin: this.allowedOrigin,
-      methods: ['GET', 'POST', 'PATCH', 'OPTIONS']
-    }));
-
     // PARSE BODY
     this.koa.use(require('koa-parse-json')());
 
@@ -114,6 +106,6 @@ class App {
   }
 }
 
-module.exports = function(dsn, allowedOrigin, logLevel) {
-  return new App(dsn, allowedOrigin, logLevel);
+module.exports = function(dsn, logLevel) {
+  return new App(dsn, logLevel);
 };
