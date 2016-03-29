@@ -3,7 +3,9 @@
 var _ = require('lodash');
 var Boom = require('boom');
 
-var pgPromise = require('pg-promise')(/*options*/);
+var pgPromise = require('pg-promise')({
+  'pgFormatting': true
+});
 
 class App {
   constructor(dsn, allowedOrigin, logLevel) {
