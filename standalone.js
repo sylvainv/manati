@@ -18,7 +18,7 @@ var app = require('./index.js')(
 // CORS
 app.koa.use(cors({
   origin: config.get('allowed_origin'),
-  methods: ['GET', 'POST', 'PATCH', 'OPTIONS']
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
 }));
 
 app.init();

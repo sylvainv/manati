@@ -32,6 +32,7 @@ class App {
     var fetchData = require('./lib/fetch')(this.koa.context.db, this.logger);
     var addData = require('./lib/add')(this.koa.context.db, this.logger);
     var updateData = require('./lib/update')(this.koa.context.db, this.logger);
+    var deleteData = require('./lib/delete')(this.koa.context.db, this.logger);
 
     // TABLE
     router.param('table', function * checkTableIsNotInternal(table, next) {
@@ -66,6 +67,11 @@ class App {
       this.body = yield updateData(this.table, this.request.body, this.request.query);
     });
 
+    // DELETE
+    router.delete('/data/:table', function* deleteDataHandler() {
+      this.body = yield deleteData(this.table, this.request.body, this.request.query);
+    });
+
     this.koa
       .use(router.routes())
       .use(router.allowedMethods({
@@ -92,7 +98,7 @@ class App {
       } catch (err) {
         self.logger.error(err);
 
-        var error = require('./lib/pgErrorHandler')(err);
+        var error = require('./lib/errorHandler')(err);
 
         this.status = error.output.statusCode;
         this.type = 'json';
