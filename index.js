@@ -8,7 +8,7 @@ var pgPromise = require('pg-promise')({
 });
 
 class App {
-  constructor(dsn, allowedOrigin, logLevel) {
+  constructor(dsn, logLevel) {
     this.dsn = dsn;
     this.koa = require('koa')();
 
