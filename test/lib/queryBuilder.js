@@ -7,7 +7,7 @@ describe('QueryBuilder.builOperation()', function () {
     QueryBuilder.buildOperation.bind(QueryBuilder, 'name', 'dasmdjaskj', '12').should.throw(Error, 'Unknown operator dasmdjaskj');
   });
 
-  it('builOperation()', function () {
+  it('builOperation() regular case', function () {
     var operation = QueryBuilder.buildOperation('name', 'eq', '12');
 
     operation.should.have.property('operation');
