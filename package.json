@@ -5,7 +5,7 @@
   "main": "api.js",
   "scripts": {
     "start": "node standalone.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/lib/ --require test/bootstrap.js"
   },
   "author": "sylvain.verly@gmail.com",
   "license": "Apache",

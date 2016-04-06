@@ -18,6 +18,7 @@
 "use strict";
 
 var Insert = manati_test_require('lib/insert.js');
+var Boom = require('boom');
 
 describe('insert', function () {
   it('insert::build() with simple data', function() {
@@ -55,5 +56,26 @@ describe('insert', function () {
     query.text.should.be.equal("INSERT INTO table (json) VALUES ($1) RETURNING *");
     // json is converted to string
     query.values.should.be.deep.equal(['{"some-data":"wazzup"}']);
+  });
+
+  it('insert::build() multiple records should fail', function () {
+    var insert = new Insert();
+
+    insert.build.bind(insert, 'table', [{'data': 123}, {'data': 324}]).should.throw('Cannot handle array insert at the moment');
+  });
+
+  it('insert::build() empty records should fail', function () {
+    var insert = new Insert();
+    insert.build.bind(insert, 'table', {}).should.throw('Nothing to insert');
+  });
+
+  it('insert::build() non ascii column names will fail', function () {
+    var insert = new Insert();
+    insert.build.bind(insert, 'table', {'*(&':'value'}).should.throw('Malformed column name: *(&');
+  });
+
+  it('insert::build() ; in the table will fail', function () {
+    var insert = new Insert();
+    insert.build.bind(insert, 'my_table; SELECT * FROM password;', {'value': 'value'}).should.throw('Syntax error');
   });
 });

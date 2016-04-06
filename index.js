@@ -3,6 +3,10 @@
 var _ = require('lodash');
 var Boom = require('boom');
 
+
+var Insert = require('./lib/insert');
+
+
 var pgPromise = require('pg-promise')({
   'pgFormatting': true
 });
@@ -27,12 +31,12 @@ class App {
 
   initRouter() {
     var router = require('koa-router')();
-    this.koa.context.db = pgPromise(this.dsn);
+    this.db = pgPromise(this.dsn);
 
-    var fetchData = require('./lib/fetch')(this.koa.context.db, this.logger);
-    var addData = require('./lib/add')(this.koa.context.db, this.logger);
-    var updateData = require('./lib/update')(this.koa.context.db, this.logger);
-    var deleteData = require('./lib/delete')(this.koa.context.db, this.logger);
+    //var fetchData = require('./lib/fetch')(this.koa.context.db, this.logger);
+    var insertData = new Insert(this.db, this.logger);
+    //var updateData = require('./lib/update')(this.koa.context.db, this.logger);
+    //var deleteData = require('./lib/delete')(this.koa.context.db, this.logger);
 
     // TABLE
     router.param('table', function * checkTableIsNotInternal(table, next) {
@@ -42,6 +46,14 @@ class App {
 
       this.table = table;
       yield next;
+    });
+
+    router.post('/data/:table', function* addDataHandler() {
+      if (!this.is('json')) {
+        throw Boom.badRequest('Content-Type needs to be "application/json"');
+      }
+
+      this.body = yield insertData.query(this.table, this.request.body);
     });
 
     // GET
