@@ -5,7 +5,19 @@
   "main": "api.js",
   "scripts": {
     "start": "node standalone.js",
-    "test": "mocha test/lib/ --require test/bootstrap.js"
+    "test": "mocha test/lib/ --require test/bootstrap.js --require blanket  -R html-cov > coverage.html",
+    "coverage": "./node_modules/istanbul-harmony/lib/cli.js cover node_modules/mocha/bin/_mocha -- test/lib/* --require test/bootstrap.js"
+  },
+  "config": {
+    "blanket": {
+      "pattern": [
+        "lib"
+      ],
+      "data-cover-never": [
+        "node_modules",
+        "test"
+      ]
+    }
   },
   "author": "sylvain.verly@gmail.com",
   "license": "Apache",
@@ -24,7 +36,10 @@
     "squel": "^4.2.2"
   },
   "devDependencies": {
+    "blanket": "^1.2.3",
     "chai": "^3.5.0",
+    "istanbul": "^0.4.3",
+    "istanbul-harmony": "^0.3.16",
     "mocha": "^2.4.5"
   }
 }
