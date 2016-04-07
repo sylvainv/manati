@@ -73,9 +73,4 @@ describe('insert', function () {
     var insert = new Insert();
     insert.build.bind(insert, 'table', {'*(&':'value'}).should.throw('Malformed column name: *(&');
   });
-
-  it('insert::build() ; in the table will fail', function () {
-    var insert = new Insert();
-    insert.build.bind(insert, 'my_table; SELECT * FROM password;', {'value': 'value'}).should.throw('Syntax error');
-  });
 });

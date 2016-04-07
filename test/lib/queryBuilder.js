@@ -37,7 +37,7 @@ describe('QueryBuilder.buildWhereExpression()', function () {
   });
 
   it('buildWhereExpression() with operator', function () {
-    QueryBuilder.buildWhereExpression(['name'], {'name': 'eq.toto'}).toString().should.be.eq("name = 'toto'");
-    QueryBuilder.buildWhereExpression(['name'], {'name': 'gt.toto'}).toString().should.be.eq("name > 'toto'");
+    QueryBuilder.buildWhereExpression(['name'], {'name': 'eq::toto'}).toString().should.be.eq("name = 'toto'");
+    QueryBuilder.buildWhereExpression(['name'], {'name': 'gt::toto'}).toString().should.be.eq("name > 'toto'");
   });
 });

@@ -5,7 +5,7 @@ var Boom = require('boom');
 
 
 var Insert = require('./lib/insert');
-
+var Select = require('./lib/select');
 
 var pgPromise = require('pg-promise')({
   'pgFormatting': true
@@ -34,7 +34,9 @@ class App {
     this.db = pgPromise(this.dsn);
 
     //var fetchData = require('./lib/fetch')(this.koa.context.db, this.logger);
-    var insertData = new Insert(this.db, this.logger);
+    var insert = new Insert(this.db, this.logger);
+    var select = new Select(this.db, this.logger);
+
     //var updateData = require('./lib/update')(this.koa.context.db, this.logger);
     //var deleteData = require('./lib/delete')(this.koa.context.db, this.logger);
 
@@ -42,6 +44,11 @@ class App {
     router.param('table', function * checkTableIsNotInternal(table, next) {
       if (_.startsWith(table, 'pg_')) {
         throw Boom.forbidden('You cannot access internal tables.');
+      }
+
+      // to prevent sql injection
+      if (table.match(/;/)) {
+        return Boom.badRequest('Syntax error');
       }
 
       this.table = table;
@@ -53,12 +60,12 @@ class App {
         throw Boom.badRequest('Content-Type needs to be "application/json"');
       }
 
-      this.body = yield insertData.query(this.table, this.request.body);
+      this.body = yield insert.query(this.table, this.request.body);
     });
 
     // GET
     router.get('/data/:table', function* fetchDataHandler() {
-      this.body = yield fetchData(this.table, this.request.query);
+      this.body = yield select.query(this.table, this.request.query);
     });
 
     // POST
