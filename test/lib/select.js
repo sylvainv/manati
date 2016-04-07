@@ -55,16 +55,12 @@ describe('select', function () {
     query.values.should.be.deep.equal(['1', 'string', '1.22']);
   });
 
-  it('select::build() with limit and 2 orders', function () {
+  it('select::build() with limit and wrong orders', function () {
     var select = new Select();
-    var query = select.build('table', {
-      "number": '1', "string": "string", "float": '1.22',
-      "limit": 2, "order": "desc::number,asc::float"
-    });
-    query = query.toParam();
 
-    query.text.should.be.equal("SELECT * FROM table WHERE (number = $1 AND string = $2 AND float = $3) ORDER BY" +
-      " number DESC, float ASC LIMIT 2");
-    query.values.should.be.deep.equal(['1', 'string', '1.22']);
+    select.build.bind(select, 'table', {
+      "number": '1', "string": "string", "float": '1.22',
+      "limit": 2, "order": "equal::number,asc::float"
+    }).should.throw("Invalid order 'equal', valid values are 'desc' or 'asc'");
   });
 });
