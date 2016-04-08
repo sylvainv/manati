@@ -1,7 +1,7 @@
 "use strict";
 var path = require('path');
 
-var root = path.resolve(__dirname, '..');
+var root = path.resolve(__dirname, '..', '..');
 var chai = require('chai');
 
 global.should = chai.should();
