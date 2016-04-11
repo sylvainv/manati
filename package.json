@@ -20,6 +20,9 @@
       ]
     }
   },
+  "engine": {
+    "node": ">= 5.0.0"
+  },
   "author": "sylvain.verly@gmail.com",
   "license": "Apache",
   "dependencies": {
