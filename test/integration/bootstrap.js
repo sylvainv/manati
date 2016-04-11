@@ -24,7 +24,7 @@ const pgp = require('pg-promise')();
 class ManatiIntegrationTest {
   constructor() {
     this.databaseName = 'manati_test_' + chance.hash({length: 6});
-    this.dsn = 'postgres://sylvain@localhost/' + this.databaseName;
+    this.dsn = 'postgres://' + process.env.PGUSER + '@localhost/' + this.databaseName;
     this.should = require('chai').should();
   }
 
