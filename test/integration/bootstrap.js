@@ -25,6 +25,7 @@ class ManatiIntegrationTest {
   constructor() {
     this.databaseName = 'manati_test_' + chance.hash({length: 6});
     this.dsn = 'postgres://sylvain@localhost/' + this.databaseName;
+    this.should = require('chai').should();
   }
 
   start(done) {
@@ -35,7 +36,7 @@ class ManatiIntegrationTest {
         return pgp(self.dsn).query(new pgp.QueryFile(__dirname + '/bootstrap.sql'));
       })
       .then(() => {
-        self.app = require('../../index.js')(this.dsn, 'debug');
+        self.app = require('../../index.js')(this.dsn, 'info');
         self.app.init();
 
         // wrap the app for testing
@@ -49,13 +50,16 @@ class ManatiIntegrationTest {
   }
 
   stop(done) {
+    // close connection
+    pgp.end();
+
     // drop db
-    exec('dropdb --host=localhost --port=5432 --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName,
-      (error, stdout, stderr) => {
-        console.log('Database ' + this.databaseName + ' droped after test');
-        if (error !== null) {
-          console.log(`exec error: ${error}`);
-        }
+    cp.exec('dropdb --host=localhost --port=5432 --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
+      .then(() => {
+        done();
+      })
+      .catch(error => {
+        console.log(`exec error: ${error}`);
         done();
       });
   }

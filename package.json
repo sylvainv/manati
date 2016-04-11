@@ -5,8 +5,9 @@
   "main": "api.js",
   "scripts": {
     "start": "node standalone.js",
-    "test": "mocha test/lib/ --require test/bootstrap.js --require blanket  -R html-cov > coverage.html",
-    "coverage": "./node_modules/istanbul-harmony/lib/cli.js cover node_modules/mocha/bin/_mocha -- test/lib/* --require test/bootstrap.js"
+    "test": "mocha test/unit/lib/ --require test/unit/bootstrap.js",
+    "integration": "mocha test/integration/*.js --require test/integration/bootstrap.js -t 10000",
+    "coverage": "./node_modules/istanbul-harmony/lib/cli.js cover node_modules/mocha/bin/_mocha -- test/unit/lib/* --require test/unit/bootstrap.js"
   },
   "config": {
     "blanket": {
@@ -33,13 +34,20 @@
     "lodash": "^4.0.0",
     "pg": "^4.4.3",
     "pg-promise": "^2.9.5",
+    "sprintf-js": "^1.0.3",
     "squel": "^4.2.2"
   },
   "devDependencies": {
+    "async": "^1.5.2",
     "blanket": "^1.2.3",
     "chai": "^3.5.0",
+    "chance": "^1.0.1",
+    "child-process-es6-promise": "^1.0.0",
+    "dockerode": "^2.2.10",
     "istanbul": "^0.4.3",
     "istanbul-harmony": "^0.3.16",
-    "mocha": "^2.4.5"
+    "mocha": "^2.4.5",
+    "sprintf-js": "^1.0.3",
+    "supertest-koa-agent": "^0.2.1"
   }
 }
