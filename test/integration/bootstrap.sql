@@ -54,17 +54,16 @@ VALUES ('a', 'aujki', 'b', 'idkao', 'Some unlimited sentence, bla bla bla', 'Ze 
 
 CREATE TABLE time_data (
   -- dates
-  timestamp_data TIMESTAMP,
   timestampz_data TIMESTAMP WITH TIME ZONE,
   date_data DATE,
   time_data TIME,
   timez_data TIME WITH TIME ZONE,
   interval_data INTERVAL
 );
-INSERT INTO time_data (timestamp_data, timestampz_data, date_data, time_data, timez_data, interval_data)
+INSERT INTO time_data (timestampz_data, date_data, time_data, timez_data, interval_data)
 VALUES
-('1999-01-08 04:05:06', 'January 8 04:05:06 1999 PST', 'January 8, 1999', '04:05:06', '04:05:06 PST', '1 year 2 months 3 days 4 hours 5 minutes 6 seconds'),
-('1999-01-08 04:05:06', 'January 8 04:05:06 1999 PST', 'January 8, 1999', '04:05:06', '04:05:06 PST', 'P1Y2M3DT4H5M6S');
+('January 8 04:05:06 1999 PST', 'January 8, 1999', '04:05:06', '04:05:06 PST', '1 year 2 months 3 days 4 hours 5 minutes 6 seconds'),
+('January 8 04:05:06 1999 PST', 'January 8, 1999', '04:05:06', '04:05:06 PST', 'P1Y2M3DT4H5M6S');
 
 CREATE TABLE misc_data (
   -- money

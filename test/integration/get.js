@@ -73,7 +73,6 @@ describe('POST /data/:table', function(done) {
   it('GET /data/time_data', function (done) {
     test.app.get('/data/time_data').expect((res) => {
       var data = res.body[0];
-      data['timestamp_data'].should.be.a('string');
       data['timestampz_data'].should.be.a('string');
       data['date_data'].should.be.a('string');
       data['time_data'].should.be.a('string');
