@@ -8,3 +8,6 @@ install:
 script:
  - npm test
  - npm run integration
+
+addons:
+  postgresql: "9.4"
