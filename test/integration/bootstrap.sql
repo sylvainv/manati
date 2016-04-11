@@ -17,15 +17,13 @@
 -- */
 BEGIN;
 
-CREATE EXTENSION pgcrypto;
-
 CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
 
 CREATE TABLE uuid_data (
   -- uuids
-  uuid uuid DEFAULT gen_random_uuid()
+  uuid uuid
 );
-INSERT INTO uuid_data (uuid) VALUES ('199F5EFB-2DF6-42CF-90D7-61D90212C74A'), (gen_random_uuid()), (gen_random_uuid());
+INSERT INTO uuid_data (uuid) VALUES ('199F5EFB-2DF6-42CF-90D7-61D90212C74A'), ('513BB1CA-EEA6-4B51-A79A-F3FE02393C35'), ('C4E687AF-2ACE-4721-8B77-4DC9F81096F0');
 
 CREATE TABLE number_data (
   -- numbers
