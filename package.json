@@ -42,11 +42,9 @@
   },
   "devDependencies": {
     "async": "^1.5.2",
-    "blanket": "^1.2.3",
     "chai": "^3.5.0",
     "chance": "^1.0.1",
     "child-process-es6-promise": "^1.0.0",
-    "dockerode": "^2.2.10",
     "istanbul": "^0.4.3",
     "istanbul-harmony": "^0.3.16",
     "mocha": "^2.4.5",
