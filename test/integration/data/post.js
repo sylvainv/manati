@@ -17,7 +17,7 @@
  */
 "use strict";
 
-var test = new ManatiIntegrationTest();
+var test = new ManatiIntegrationTest(__dirname + '/../bootstrap.sql');
 const chance = require('chance').Chance();
 const async = require('async');
 const sprintf = require("sprintf-js").sprintf;

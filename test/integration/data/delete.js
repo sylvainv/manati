@@ -17,7 +17,7 @@
  */
 "use strict";
 
-var test = new ManatiIntegrationTest();
+var test = new ManatiIntegrationTest(__dirname + '/../bootstrap.sql');
 const chance = require('chance').Chance();
 const async = require('async');
 const sprintf = require("sprintf-js").sprintf;
@@ -34,37 +34,31 @@ var checkLength = function(route, length) {
   };
 };
 
-describe('PATCH /data/:table', function (done) {
+describe('DELETE /data/:table', function (done) {
   before(function (done) {
     test.start(done);
   });
 
-  it('PATCH /data/uuid_data?uuid=199F5EFB-2DF6-42CF-90D7-61D90212C74A', function (done) {
+  it('DELETE /data/uuid_data?uuid=199F5EFB-2DF6-42CF-90D7-61D90212C74A', function (done) {
     var uuid = chance.guid();
 
     async.series([
-      function(cb) {test.app.patch('/data/uuid_data?uuid=199F5EFB-2DF6-42CF-90D7-61D90212C74A')
+      function(cb) {test.app.delete('/data/uuid_data?uuid=199F5EFB-2DF6-42CF-90D7-61D90212C74A')
         .set('Content-Type', 'application/json')
-        .send({
-          uuid: uuid
-        })
-        .expect(200, [{uuid: uuid}]).end(cb);
+        .expect(200, [{uuid: '199f5efb-2df6-42cf-90d7-61d90212c74a'}]).end(cb);
       },
-      checkLength('/data/uuid_data', 3)
+      checkLength('/data/uuid_data', 2)
     ], done);
   });
 
-  it('PATCH /data/number_data?smallint_number=gte::32767', function (done) {
+  it('DELETE /data/number_data?smallint_number=gte::32767', function (done) {
     async.series([
       function (cb) {
-        test.app.patch('/data/number_data?smallint_number=gte::32767')
+        test.app.delete('/data/number_data?smallint_number=gte::32767')
           .set('Content-Type', 'application/json')
-          .send({
-            'int_number': 1
-          })
           .expect(200, [{
             smallint_number: 32767,
-            int_number: 1,
+            int_number: 2147483647,
             bigint_number: '9223372036854775807',
             decimal_number: '1.2',
             numeric_number: '1.3',
@@ -73,7 +67,7 @@ describe('PATCH /data/:table', function (done) {
           }])
           .end(cb);
       },
-      checkLength('/data/number_data', 2)
+      checkLength('/data/number_data', 1)
     ], done);
   });
 

@@ -22,10 +22,11 @@ const cp = require('child-process-es6-promise');
 const pgp = require('pg-promise')();
 
 class ManatiIntegrationTest {
-  constructor() {
+  constructor(sqlFile) {
     this.databaseName = 'manati_test_' + chance.hash({length: 6});
     this.dsn = 'postgres://' + process.env.PGUSER + '@localhost/' + this.databaseName;
     this.should = require('chai').should();
+    this.sqlFile = sqlFile;
   }
 
   start(done) {
@@ -33,7 +34,7 @@ class ManatiIntegrationTest {
     // create db
     cp.exec('createdb --host=localhost --port=5432 --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
       .then(() => {
-        return pgp(self.dsn).query(new pgp.QueryFile(__dirname + '/bootstrap.sql'));
+        return self.load(self.sqlFile);
       })
       .then(() => {
         self.app = require('../../index.js')(this.dsn, 'info');
@@ -47,6 +48,11 @@ class ManatiIntegrationTest {
         console.error(`exec error: ${error}`);
         done();
       });
+  }
+
+  load(sqlFile) {
+    var self = this;
+    return pgp(self.dsn).query(new pgp.QueryFile(sqlFile));
   }
 
   stop(done) {
