@@ -27,32 +27,39 @@ class ManatiIntegrationTest {
     this.dsn = 'postgres://' + process.env.PGUSER + '@localhost/' + this.databaseName;
     this.should = require('chai').should();
     this.sqlFile = sqlFile;
+    this.rootPath = __dirname + '/../../';
   }
 
   start(done) {
     var self = this;
     // create db
-    cp.exec('createdb --host=localhost --port=5432 --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
+    return cp.exec('createdb --host=localhost --port=5432 --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
       .then(() => {
+        if (self.sqlFile === undefined) {
+          return Promise.resolve();
+        }
+
         return self.load(self.sqlFile);
       })
       .then(() => {
-        self.app = require('../../index.js')(this.dsn, 'info');
-        self.app.init();
+        self.app = require(self.rootPath + 'index.js')(this.dsn, 'info');
+        self.app.init({'authentication': {}, 'authorization': {}});
 
         // wrap the app for testing
         self.app = require('supertest-koa-agent')(self.app.koa);
-      })
-      .then(() => {done();})
-      .catch((error) => {
-        console.error(`exec error: ${error}`);
-        done();
+
+        self.db = pgp(this.dsn);
+
+        return Promise.resolve();
       });
   }
 
+  query(query) {
+    return this.db.any(query);
+  }
+
   load(sqlFile) {
-    var self = this;
-    return pgp(self.dsn).query(new pgp.QueryFile(sqlFile));
+    return this.db.any(new pgp.QueryFile(sqlFile, {minify: true}));
   }
 
   stop(done) {
@@ -62,10 +69,6 @@ class ManatiIntegrationTest {
     // drop db
     cp.exec('dropdb --host=localhost --port=5432 --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
       .then(() => {
-        done();
-      })
-      .catch(error => {
-        console.log(`exec error: ${error}`);
         done();
       });
   }

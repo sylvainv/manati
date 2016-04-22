@@ -43,21 +43,57 @@ class App {
     ]});
   }
 
+  initAuthorization(dataRouter, options) {
+    options = _.defaults({
+      parseHeader: function (header) {
+        return header.split('Bearer ')[1];
+      },
+      buildAuthorizationQuery: function (authorization) {
+        // make sure authorization matches a specific pattern to avoid injection
+        if (!authorization.match(/[a-f0-9]{64}/)) {
+          throw Boom.badRequest('Invalid token');
+        }
+
+        return {
+          text: 'select manati_auth.authorize($1);',
+          values: [authorization]
+        }
+      }
+    }, options);
+
+    dataRouter.use(function* authorize(next) {
+      var authorization = options.parseHeader(this.request.get('Authorization'));
+      this.request.authorizationQuery = options.buildAuthorizationQuery(authorization);
+
+      yield next;
+    });
+  }
+
   initRouter() {
     this.db = pgPromise(this.dsn);
 
-    var router = require('./router')(this.db, this.logger);
+    var data = require('./lib/router/data')(this.db, this.logger);
 
-    this.koa
-      .use(router.routes())
-      .use(router.allowedMethods({
-        throw: true,
-        notImplemented: () => new Boom.notImplemented(),
-        methodNotAllowed: () => new Boom.methodNotAllowed()
-      }));
+    if (this.options.authentication !== undefined) {
+      var authentication = require('./lib/router/authentication')(this.db, this.logger, this.options['authentication']);
+      this.koa.use(authentication.routes());
+    }
+
+    if (this.options.authorization !== undefined) {
+      this.initAuthorization(data, this.options.authorization);
+    }
+
+    this.koa.use(data.routes());
+    this.koa.use(data.allowedMethods({
+      throw: true,
+      notImplemented: () => new Boom.notImplemented(),
+      methodNotAllowed: () => new Boom.methodNotAllowed()
+    }));
   }
 
-  init() {
+  init(options) {
+    this.options = options || {};
+
     // PARSE BODY
     this.koa.use(require('koa-parse-json')());
 
@@ -74,7 +110,7 @@ class App {
 
         this.status = error.output.statusCode;
         this.type = 'json';
-        this.body = JSON.stringify(error.output.payload);
+        this.body = JSON.stringify({message: error.output.payload.message});
       }
     });
 
