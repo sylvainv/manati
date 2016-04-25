@@ -36,7 +36,14 @@ var checkLength = function(route, length) {
 
 describe('PATCH /data/:table', function (done) {
   before(function (done) {
-    test.start(done);
+    test.start()
+      .then(function () {
+        done();
+      })
+      .catch((error) => {
+        console.error(`exec error: ${error}`);
+        done();
+      });
   });
 
   it('PATCH /data/uuid_data?uuid=199F5EFB-2DF6-42CF-90D7-61D90212C74A', function (done) {

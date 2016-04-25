@@ -26,7 +26,14 @@ var log = function (res) {
 
 describe('POST /data/:table', function(done) {
   before(function (done) {
-    test.start(done);
+    test.start()
+      .then(function () {
+        done();
+      })
+      .catch((error) => {
+        console.error(`exec error: ${error}`);
+        done();
+      });
   });
 
   it('GET /data/uuid_data', function (done) {

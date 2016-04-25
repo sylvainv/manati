@@ -47,7 +47,7 @@ describe('Authentication/Authorization', function() {
   var token;
 
   before(function (done) {
-    test.start(done)
+    test.start({'authentication': {}, 'authorization': {}})
       .then(() => {
         return test.load(test.rootPath + 'sql/utils.sql');
       })
@@ -63,7 +63,7 @@ describe('Authentication/Authorization', function() {
       .catch((error) => {
         console.error(`exec error: ${error}`);
         done();
-      })
+      });
   });
 
   it('POST /authenticate', function (done) {

@@ -28,12 +28,16 @@ class ManatiIntegrationTest {
     this.should = require('chai').should();
     this.sqlFile = sqlFile;
     this.rootPath = __dirname + '/../../';
+    this.port = process.env.PGPORT || 5432;
   }
 
-  start(done) {
+  start(options) {
     var self = this;
+
+    this.db = pgp(this.dsn);
+
     // create db
-    return cp.exec('createdb --host=localhost --port=5432 --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
+    return cp.exec('createdb --host=localhost --port=' + self.port + ' --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
       .then(() => {
         if (self.sqlFile === undefined) {
           return Promise.resolve();
@@ -43,12 +47,10 @@ class ManatiIntegrationTest {
       })
       .then(() => {
         self.app = require(self.rootPath + 'index.js')(this.dsn, 'info');
-        self.app.init({'authentication': {}, 'authorization': {}});
+        self.app.init(options);
 
         // wrap the app for testing
         self.app = require('supertest-koa-agent')(self.app.koa);
-
-        self.db = pgp(this.dsn);
 
         return Promise.resolve();
       });
@@ -67,8 +69,12 @@ class ManatiIntegrationTest {
     pgp.end();
 
     // drop db
-    cp.exec('dropdb --host=localhost --port=5432 --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
+    cp.exec('dropdb --host=localhost --port=' + this.port + ' --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
       .then(() => {
+        done();
+      })
+      .catch(err => {
+        console.log(`exec error ${err}`);
         done();
       });
   }

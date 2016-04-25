@@ -13,9 +13,8 @@ sudo: required
 
 env:
   global:
-  - NODE_ENV=test
-  - PGPORT=5432
-  - PGHOST=localhost
+    - NODE_ENV=test
+    - PGPORT=5433
 
 addons:
   apt:
@@ -29,4 +28,3 @@ addons:
 before_script:
   - sudo cp /etc/postgresql/9.4/main/pg_hba.conf /etc/postgresql/9.5/main/pg_hba.conf
   - sudo /etc/init.d/postgresql restart
-  - sudo initdb 
