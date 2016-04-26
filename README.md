@@ -2,7 +2,7 @@
 
 REST API for PostgreSQL. Forget ORM!
 
-[![Build Status](https://travis-ci.org/sylvainv/manati.svg?branch=master)](https://travis-ci.org/sylvainv/manati)
+[![Build Status](https://travis-ci.org/sylvainv/pg-manati.svg?branch=master)](https://travis-ci.org/sylvainv/pg-manati)
 
 ## Usage
 
