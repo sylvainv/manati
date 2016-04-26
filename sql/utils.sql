@@ -29,6 +29,17 @@ BEGIN
 END
 $body$;
 
+DO
+$body$
+BEGIN
+   IF NOT EXISTS (SELECT * FROM pg_catalog.pg_roles WHERE rolname = 'manati_user') THEN
+     CREATE ROLE manati_user LOGIN NOCREATEDB NOCREATEROLE NOBYPASSRLS NOSUPERUSER NOINHERIT;
+   ELSE
+     ALTER ROLE manati_user LOGIN NOCREATEDB NOCREATEROLE NOBYPASSRLS NOSUPERUSER NOINHERIT;
+   END IF;
+END
+$body$;
+
 CREATE SCHEMA IF NOT EXISTS manati_utils AUTHORIZATION manati_admin;
 
 SET ROLE manati_admin;
@@ -59,14 +70,14 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION manati_utils.init_timestamps(table_name text) RETURNS void AS $$
 BEGIN
   BEGIN
-    EXECUTE 'ALTER TABLE ' || table_name || ' ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp';
+    EXECUTE 'ALTER TABLE ' || table_name || ' ADD COLUMN created_at TIMESTAMP WITH TIME ZONE';
     EXCEPTION
       WHEN duplicate_column THEN
         NULL;
   END;
 
   BEGIN
-    EXECUTE 'ALTER TABLE ' || table_name || ' ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp';
+    EXECUTE 'ALTER TABLE ' || table_name || ' ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE';
     EXCEPTION
       WHEN duplicate_column THEN
         NULL;
