@@ -7,10 +7,9 @@ REST API for PostgreSQL. Forget ORM!
 ## Usage
 
 ```javascript
-var manati = require('manati');
+var manati = require('pg-manati');
 var app = manati(
   process.env.DATABASE_URL || 'postgres://user@localhost/database', // your database connection string
-  'www.example.com', // the domain allow to do cross-request
   'info' // the minumum log level that will be output
 );
 
