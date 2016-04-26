@@ -99,11 +99,11 @@ describe('Authentication/Authorization', function() {
       .end(done);
   });
 
-  it('GET /data/json_data authorize', function (done) {
-    test.app.get('/data/json_data')
+  it('GET /data/ip_data authorize', function (done) {
+    test.app.get('/data/ip_data')
       .set('Content-Type', 'application/json')
       .set('Authorization', 'Bearer ' + token)
-      .expect(log)
+      .expect([{ip_data:'192.168.100.128/25', host_data:'192.168.12.1', macaddr_data:'08:00:2b:01:02:03'}])
       .expect(200)
       .end(done);
   });
@@ -112,10 +112,67 @@ describe('Authentication/Authorization', function() {
     test.app.get('/data/json_data')
       .set('Content-Type', 'application/json')
       .set('Authorization', 'Bearer aaabbb7ead31cf6ff2df96a101f8bc35e3553e449a43e85d19af156e1f7638b7')
-      .expect(log)
+      .expect({"message": "Token does not exist"})
       .expect(401)
       .end(done);
   });
+
+  it('POST /data/ip_data authorize', function (done) {
+    test.app.post('/data/ip_data')
+      .set('Content-Type', 'application/json')
+      .set('Authorization', 'Bearer ' + token)
+      .send('{"ip_data":"192.168.100.128/25"}')
+      .expect([{ip_data: '192.168.100.128/25', host_data: null, macaddr_data: null}])
+      .expect(200)
+      .end(done);
+  });
+
+  it('POST /data/json_data wrong token', function (done) {
+    test.app.post('/data/json_data')
+      .set('Content-Type', 'application/json')
+      .set('Authorization', 'Bearer aaabbb7ead31cf6ff2df96a101f8bc35e3553e449a43e85d19af156e1f7638b7')
+      .send('{"json_data":{"toto":"blabla"}}')
+      .expect({"message": "Token does not exist"})
+      .expect(401)
+      .end(done);
+  });
+
+  it('PATCH /data/string_data authorize', function (done) {
+    test.app.patch('/data/string_data?char_short=eq.a')
+      .set('Content-Type', 'application/json')
+      .set('Authorization', 'Bearer ' + token)
+      .send('{"char_short":"b"}')
+      .expect(log)
+      .expect(200)
+      .end(done);
+  });
+
+  it('PATCH /data/string_data wrong token', function (done) {
+    test.app.patch('/data/string_data?char_short=eq.a')
+      .set('Content-Type', 'application/json')
+      .set('Authorization', 'Bearer aaabbb7ead31cf6ff2df96a101f8bc35e3553e449a43e85d19af156e1f7638b7')
+      .send('{"char_short":"b"}')
+      .expect({"message": "Token does not exist"})
+      .expect(401)
+      .end(done);
+  });
+
+  it('DELETE /data/string_data authorize', function (done) {
+    test.app.delete('/data/string_data?char_short=eq.a')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(log)
+      .expect(200)
+      .end(done);
+  });
+
+  it('DELETE /data/string_data wrong token', function (done) {
+    test.app.delete('/data/string_data?char_short=eq.a')
+      .set('Authorization', 'Bearer aaabbb7ead31cf6ff2df96a101f8bc35e3553e449a43e85d19af156e1f7638b7')
+      .expect({"message": "Token does not exist"})
+      .expect(401)
+      .end(done);
+  });
+
 
   after(function (done) {
     test.stop(done);

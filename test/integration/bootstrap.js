@@ -46,7 +46,7 @@ class ManatiIntegrationTest {
         return self.load(self.sqlFile);
       })
       .then(() => {
-        self.app = require(self.rootPath + 'index.js')(this.dsn, 'info');
+        self.app = require(self.rootPath + 'index.js')(this.dsn, 'fatal');
         self.app.init(options);
 
         // wrap the app for testing
