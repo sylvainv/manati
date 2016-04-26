@@ -22,6 +22,8 @@ app.init();
 app.start(3000);
 ```
 
+Check our [wiki](https://github.com/sylvainv/pg-manati/wiki) for more information!
+
 ## Example
 
 ### Get some users data
