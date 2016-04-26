@@ -22,7 +22,7 @@ var Select = manati_test_require('lib/select.js');
 describe('select', function () {
   it('select::build() with simple query', function() {
     var select = new Select();
-    var query = select.build('table', {"number": '1', "string": "string", "float": '1.22'});
+    var query = select.build('table', {}, {"number": '1', "string": "string", "float": '1.22'});
     query = query.toParam();
 
     query.text.should.be.equal("SELECT * FROM table WHERE (number = $1 AND string = $2 AND float = $3)");
@@ -31,7 +31,7 @@ describe('select', function () {
 
   it('select::build() with limit and order', function () {
     var select = new Select();
-    var query = select.build('table', {
+    var query = select.build('table', {}, {
       "number": '1', "string": "string", "float": '1.22',
       "limit": 2, "order": "desc::number"
     });
@@ -44,7 +44,7 @@ describe('select', function () {
 
   it('select::build() with limit and 2 orders', function () {
     var select = new Select();
-    var query = select.build('table', {
+    var query = select.build('table', {}, {
       "number": '1', "string": "string", "float": '1.22',
       "limit": 2, "order": "desc::number,asc::float"
     });
@@ -58,7 +58,7 @@ describe('select', function () {
   it('select::build() with limit and wrong orders', function () {
     var select = new Select();
 
-    select.build.bind(select, 'table', {
+    select.build.bind(select, 'table', {}, {
       "number": '1', "string": "string", "float": '1.22',
       "limit": 2, "order": "equal::number,asc::float"
     }).should.throw("Invalid order 'equal', valid values are 'desc' or 'asc'");

@@ -21,11 +21,6 @@ var _ = require('lodash');
 var Boom = require('boom');
 
 
-var Insert = require('./lib/insert');
-var Select = require('./lib/select');
-var Update = require('./lib/update');
-var Delete = require('./lib/delete');
-
 var pgPromise = require('pg-promise')({
   'pgFormatting': true
 });
@@ -48,69 +43,57 @@ class App {
     ]});
   }
 
-  initRouter() {
-    var router = require('koa-router')();
-    this.db = pgPromise(this.dsn);
+  initAuthorization(dataRouter, options) {
+    options = _.defaults({
+      parseHeader: function (header) {
+        return header.split('Bearer ')[1];
+      },
+      buildAuthorizationQuery: function (authorization) {
+        // make sure authorization matches a specific pattern to avoid injection
+        if (!authorization.match(/[a-f0-9]{64}/)) {
+          throw Boom.badRequest('Invalid token');
+        }
 
-    //var fetchData = require('./lib/fetch')(this.koa.context.db, this.logger);
-    var insert = new Insert(this.db, this.logger);
-    var select = new Select(this.db, this.logger);
-    var update = new Update(this.db, this.logger);
-    var delet = new Delete(this.db, this.logger);
-
-    // TABLE
-    router.param('table', function * checkTableIsNotInternal(table, next) {
-      if (_.startsWith(table, 'pg_')) {
-        throw Boom.forbidden('You cannot access internal tables.');
+        return {
+          text: 'select manati_auth.authorize($1);',
+          values: [authorization]
+        }
       }
+    }, options);
 
-      // to prevent sql injection
-      if (table.match(/;/)) {
-        return Boom.badRequest('Syntax error');
-      }
+    dataRouter.use(function* authorize(next) {
+      var authorization = options.parseHeader(this.request.get('Authorization'));
+      this.request.authorizationQuery = options.buildAuthorizationQuery(authorization);
 
-      this.table = table;
       yield next;
     });
-
-    // POST
-    router.post('/data/:table', function* addDataHandler() {
-      if (!this.is('json')) {
-        throw Boom.badRequest('Content-Type needs to be "application/json"');
-      }
-
-      this.body = yield insert.query(this.table, this.request.body);
-    });
-
-    // GET
-    router.get('/data/:table', function* fetchDataHandler() {
-      this.body = yield select.query(this.table, this.request.query);
-    });
-
-    // PATCH
-    router.patch('/data/:table', function* updateDatahandler() {
-      if (!this.is('json')) {
-        throw Boom.badRequest('Content-Type needs to be "application/json"');
-      }
-
-      this.body = yield update.query(this.table, this.request.body, this.request.query);
-    });
-
-    // DELETE
-    router.delete('/data/:table', function* deleteDataHandler() {
-      this.body = yield delet.query(this.table, this.request.query);
-    });
-
-    this.koa
-      .use(router.routes())
-      .use(router.allowedMethods({
-        throw: true,
-        notImplemented: () => new Boom.notImplemented(),
-        methodNotAllowed: () => new Boom.methodNotAllowed()
-      }));
   }
 
-  init() {
+  initRouter() {
+    this.db = pgPromise(this.dsn);
+
+    var data = require('./lib/router/data')(this.db, this.logger);
+
+    if (this.options.authentication !== undefined) {
+      var authentication = require('./lib/router/authentication')(this.db, this.logger, this.options['authentication']);
+      this.koa.use(authentication.routes());
+    }
+
+    if (this.options.authorization !== undefined) {
+      this.initAuthorization(data, this.options.authorization);
+    }
+
+    this.koa.use(data.routes());
+    this.koa.use(data.allowedMethods({
+      throw: true,
+      notImplemented: () => new Boom.notImplemented(),
+      methodNotAllowed: () => new Boom.methodNotAllowed()
+    }));
+  }
+
+  init(options) {
+    this.options = options || {};
+
     // PARSE BODY
     this.koa.use(require('koa-parse-json')());
 
@@ -127,7 +110,7 @@ class App {
 
         this.status = error.output.statusCode;
         this.type = 'json';
-        this.body = JSON.stringify(error.output.payload);
+        this.body = JSON.stringify({message: error.output.payload.message});
       }
     });
 

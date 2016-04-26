@@ -22,7 +22,7 @@ var Delete = manati_test_require('lib/delete.js');
 describe('delete', function () {
   it('delete::build() with simple query', function() {
     var delet = new Delete();
-    var query = delet.build('table', {"number": '1', "string": "string", "float": '1.22'});
+    var query = delet.build('table', {}, {"number": '1', "string": "string", "float": '1.22'});
     query = query.toParam();
 
     query.text.should.be.equal("DELETE FROM table WHERE (number = $1 AND string = $2 AND float = $3) RETURNING *");
@@ -31,7 +31,7 @@ describe('delete', function () {
 
   it('delete::build() mass deleting not allowed', function () {
     var delet = new Delete();
-    delet.build.bind(delet, 'table', {})
+    delet.build.bind(delet, 'table', {}, {})
       .should.throw('You need to pass query parameters to filter out the data, deleting the whole table content is' +
       ' not allowed');
   });
