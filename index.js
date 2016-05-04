@@ -19,18 +19,44 @@
 
 var _ = require('lodash');
 var Boom = require('boom');
-
+var url = require('url');
 
 var pgPromise = require('pg-promise')({
-  'pgFormatting': true
+  pgFormatting: true,
+  promiseLib: require('bluebird')
 });
 
 class App {
   constructor(dsn, logLevel) {
     this.dsn = dsn;
-    this.koa = require('koa')();
 
     this.initLogger(logLevel);
+  }
+
+  createSocketServer() {
+    return require('ws').createServer({server: this.server});
+  }
+
+  createHttpServer() {
+    var server = require('http').createServer();
+    server.on('request', this.koa.callback());
+    return server;
+  }
+
+  createKoaServer() {
+    return require('koa')();
+  }
+
+  createDatabaseConnection() {
+    return pgPromise(this.dsn);
+  }
+
+  setup() {
+    this.koa = this.createKoaServer();
+    this.server = this.createHttpServer();
+    this.websocketServer = this.createSocketServer();
+
+    return this;
   }
 
   initLogger(logLevel) {
@@ -43,7 +69,7 @@ class App {
     ]});
   }
 
-  initAuthorization(dataRouter, options) {
+  initAuthorization(options) {
     options = _.defaults({
       parseHeader: function (header) {
         return header.split('Bearer ')[1];
@@ -61,34 +87,17 @@ class App {
       }
     }, options);
 
-    dataRouter.use(function* authorize(next) {
+    this.koa.use(function* authorize(next) {
       var authorization = options.parseHeader(this.request.get('Authorization'));
-      this.request.authorizationQuery = options.buildAuthorizationQuery(authorization);
+      this.req.authorizationQuery = options.buildAuthorizationQuery(authorization);
+      this.req.restricted = true;
 
       yield next;
     });
   }
 
-  initRouter() {
-    this.db = pgPromise(this.dsn);
-
-    var data = require('./lib/router/data')(this.db, this.logger);
-
-    if (this.options.authentication !== undefined) {
-      var authentication = require('./lib/router/authentication')(this.db, this.logger, this.options['authentication']);
-      this.koa.use(authentication.routes());
-    }
-
-    if (this.options.authorization !== undefined) {
-      this.initAuthorization(data, this.options.authorization);
-    }
-
-    this.koa.use(data.routes());
-    this.koa.use(data.allowedMethods({
-      throw: true,
-      notImplemented: () => new Boom.notImplemented(),
-      methodNotAllowed: () => new Boom.methodNotAllowed()
-    }));
+  initSocket() {
+    require('./lib/pubsub.js')(this.websocketServer, this.db, this.dsn, this.logger);
   }
 
   init(options) {
@@ -114,14 +123,37 @@ class App {
       }
     });
 
-    this.initRouter();
+    this.db = this.createDatabaseConnection();
+
+    // DATA ROUTER
+    var data = require('./lib/router/data')(this.db, this.logger);
+
+    if (this.options.authentication !== undefined) {
+      var authentication = require('./lib/router/authentication')(this.db, this.logger, this.options.authentication);
+      this.koa.use(authentication.routes());
+    }
+
+    if (this.options.authorization !== undefined) {
+      this.initAuthorization(this.options.authorization);
+    }
+
+    this.initSocket();
+
+    this.koa.use(data.routes());
+    this.koa.use(data.allowedMethods({
+      throw: true,
+      notImplemented: () => new Boom.notImplemented(),
+      methodNotAllowed: () => new Boom.methodNotAllowed()
+    }));
   }
 
   start(port) {
-    this.koa.listen(port);
+    this.server.listen(port, () => {
+      console.log('Listening on %j', this.server.address());
+    });
   }
 }
 
 module.exports = function(dsn, logLevel) {
-  return new App(dsn, logLevel);
+    return new App(dsn, logLevel).setup();
 };

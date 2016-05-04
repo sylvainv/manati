@@ -28,7 +28,7 @@ var log = function (res) {
 
 var checkLength = function(route, length) {
   return function(cb) {
-    test.app.get(route).expect((res) => {
+    test.agent.get(route).expect((res) => {
       res.body.should.have.length(length);
     }).expect(200).end(cb);
   };
@@ -41,7 +41,6 @@ describe('PATCH /data/:table', function (done) {
         done();
       })
       .catch((error) => {
-        console.error(`exec error: ${error}`);
         done();
       });
   });
@@ -50,7 +49,7 @@ describe('PATCH /data/:table', function (done) {
     var uuid = chance.guid();
 
     async.series([
-      function(cb) {test.app.patch('/data/uuid_data?uuid=199F5EFB-2DF6-42CF-90D7-61D90212C74A')
+      function(cb) {test.agent.patch('/data/uuid_data?uuid=199F5EFB-2DF6-42CF-90D7-61D90212C74A')
         .set('Content-Type', 'application/json')
         .send({
           uuid: uuid
@@ -64,7 +63,7 @@ describe('PATCH /data/:table', function (done) {
   it('PATCH /data/number_data?smallint_number=gte::32767', function (done) {
     async.series([
       function (cb) {
-        test.app.patch('/data/number_data?smallint_number=gte::32767')
+        test.agent.patch('/data/number_data?smallint_number=gte::32767')
           .set('Content-Type', 'application/json')
           .send({
             'int_number': 1

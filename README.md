@@ -4,13 +4,17 @@ REST API for PostgreSQL. Forget ORM!
 
 [![Build Status](https://travis-ci.org/sylvainv/pg-manati.svg?branch=master)](https://travis-ci.org/sylvainv/pg-manati)
 
+## ChangeLog
+
+[Check the changelog](CHANGELOG.md) for new features information or important breaking change info.
+
 ## Usage
 
 ```javascript
 var manati = require('pg-manati');
 var app = manati(
   process.env.DATABASE_URL || 'postgres://user@localhost/database', // your database connection string
-  'info' // the minumum log level that will be output
+  process.env.LOG_LEVEL || 'info' // the minumum log level that will be output
 );
 
 // Manati uses KoaJS, if you want to extend it to your needs you can use (see http://koajs.com/ for more info)

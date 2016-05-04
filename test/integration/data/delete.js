@@ -28,7 +28,7 @@ var log = function (res) {
 
 var checkLength = function(route, length) {
   return function(cb) {
-    test.app.get(route).expect((res) => {
+    test.agent.get(route).expect((res) => {
       res.body.should.have.length(length);
     }).expect(200).end(cb);
   };
@@ -41,7 +41,6 @@ describe('DELETE /data/:table', function (done) {
         done();
       })
       .catch((error) => {
-        console.error(`exec error: ${error}`);
         done();
       });
   });
@@ -50,7 +49,7 @@ describe('DELETE /data/:table', function (done) {
     var uuid = chance.guid();
 
     async.series([
-      function(cb) {test.app.delete('/data/uuid_data?uuid=199F5EFB-2DF6-42CF-90D7-61D90212C74A')
+      function(cb) {test.agent.delete('/data/uuid_data?uuid=199F5EFB-2DF6-42CF-90D7-61D90212C74A')
         .set('Content-Type', 'application/json')
         .expect(200, [{uuid: '199f5efb-2df6-42cf-90d7-61d90212c74a'}]).end(cb);
       },
@@ -61,7 +60,7 @@ describe('DELETE /data/:table', function (done) {
   it('DELETE /data/number_data?smallint_number=gte::32767', function (done) {
     async.series([
       function (cb) {
-        test.app.delete('/data/number_data?smallint_number=gte::32767')
+        test.agent.delete('/data/number_data?smallint_number=gte::32767')
           .set('Content-Type', 'application/json')
           .expect(200, [{
             smallint_number: 32767,

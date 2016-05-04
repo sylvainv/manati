@@ -28,7 +28,7 @@ var log = function (res) {
 
 var checkLength = function(route, length) {
   return function(cb) {
-    test.app.get(route).expect((res) => {
+    test.agent.get(route).expect((res) => {
       res.body.should.have.length(length);
     }).expect(200).end(cb);
   };
@@ -41,7 +41,6 @@ describe('POST /data/:table', function (done) {
         done();
       })
       .catch((error) => {
-        console.error(`exec error: ${error}`);
         done();
       });
   });
@@ -50,7 +49,7 @@ describe('POST /data/:table', function (done) {
     var uuid = chance.guid();
 
     async.series([
-      function(cb) {test.app.post('/data/uuid_data')
+      function(cb) {test.agent.post('/data/uuid_data')
         .set('Content-Type', 'application/json')
         .send({
           uuid: uuid
@@ -65,7 +64,7 @@ describe('POST /data/:table', function (done) {
   it('POST /data/number_data', function (done) {
     async.series([
       function (cb) {
-        test.app.post('/data/number_data')
+        test.agent.post('/data/number_data')
           .set('Content-Type', 'application/json')
           .send({
             'smallint_number': 1,
@@ -97,7 +96,7 @@ describe('POST /data/:table', function (done) {
 
     async.series([
       function (cb) {
-        test.app.post('/data/string_data')
+        test.agent.post('/data/string_data')
           .set('Content-Type', 'application/json')
           .send(data = {
             'char_short': chance.character(),
@@ -118,7 +117,7 @@ describe('POST /data/:table', function (done) {
   it('POST /data/time_data', function (done) {
     async.series([
       function (cb) {
-        test.app.post('/data/time_data')
+        test.agent.post('/data/time_data')
           .set('Content-Type', 'application/json')
           .send({
             timestampz_data: '2022-01-13T20:26:04.697Z',
@@ -146,7 +145,7 @@ describe('POST /data/:table', function (done) {
 
     async.series([
       function (cb) {
-        test.app.post('/data/misc_data')
+        test.agent.post('/data/misc_data')
           .set('Content-Type', 'application/json')
           .send(data = {
             'money_data': chance.dollar({max:999}),
@@ -167,7 +166,7 @@ describe('POST /data/:table', function (done) {
 
     async.series([
       function (cb) {
-        test.app.post('/data/ip_data')
+        test.agent.post('/data/ip_data')
           .set('Content-Type', 'application/json')
           .send(data = {
             'macaddr_data': chance.mac_address().toLowerCase(),
@@ -187,7 +186,7 @@ describe('POST /data/:table', function (done) {
 
     async.series([
       function (cb) {
-        test.app.post('/data/json_data')
+        test.agent.post('/data/json_data')
           .set('Content-Type', 'application/json')
           .send(data = {
             'json_data': {"string": chance.paragraph(), "number": chance.integer(), "float": chance.floating(), "boolean": chance.bool()},

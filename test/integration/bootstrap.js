@@ -20,6 +20,8 @@
 const chance = require('chance').Chance();
 const cp = require('child-process-es6-promise');
 const pgp = require('pg-promise')();
+const supertest = require('supertest');
+const superagent = require('superagent');
 
 class ManatiIntegrationTest {
   constructor(sqlFile) {
@@ -29,6 +31,10 @@ class ManatiIntegrationTest {
     this.sqlFile = sqlFile;
     this.rootPath = __dirname + '/../../';
     this.port = process.env.PGPORT || 5432;
+
+    process.on('SIGINT', () => {
+      this.stop(function(){});
+    });
   }
 
   start(options) {
@@ -37,6 +43,7 @@ class ManatiIntegrationTest {
     this.db = pgp(this.dsn);
 
     // create db
+    console.log('Creating database ' + this.databaseName);
     return cp.exec('createdb --host=localhost --port=' + self.port + ' --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
       .then(() => {
         if (self.sqlFile === undefined) {
@@ -46,13 +53,20 @@ class ManatiIntegrationTest {
         return self.load(self.sqlFile);
       })
       .then(() => {
-        self.app = require(self.rootPath + 'index.js')(this.dsn, 'fatal');
+        self.app = require(self.rootPath + 'index.js')(this.dsn, process.env.LOG_LEVEL || 'fatal');
+        self.app.setup();
         self.app.init(options);
 
-        // wrap the app for testing
-        self.app = require('supertest-koa-agent')(self.app.koa);
+        // wrap the app for testing the server
+        self.agent = supertest.agent(self.app.server);
+
+        self.app.start(0);
 
         return Promise.resolve();
+      })
+      .catch(err => {
+        console.log(err.stack);
+        throw err;
       });
   }
 

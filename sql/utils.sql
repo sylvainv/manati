@@ -83,10 +83,10 @@ BEGIN
         NULL;
   END;
 
-  EXECUTE 'DROP TRIGGER if exists set_timestamps on ' || table_name;
+  EXECUTE 'DROP TRIGGER IF EXISTS set_timestamps on ' || table_name;
   EXECUTE 'CREATE TRIGGER set_timestamps BEFORE INSERT on ' || table_name || ' FOR EACH ROW EXECUTE PROCEDURE manati_utils.set_timestamps()';
 
-  EXECUTE 'DROP TRIGGER if exists update_timestamps on ' || table_name;
+  EXECUTE 'DROP TRIGGER IF EXISTS update_timestamps on ' || table_name;
   EXECUTE 'CREATE TRIGGER update_timestamps BEFORE UPDATE on ' ||  table_name || ' FOR EACH ROW EXECUTE PROCEDURE manati_utils.update_timestamps()';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

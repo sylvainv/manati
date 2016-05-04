@@ -67,7 +67,7 @@ describe('Authentication/Authorization', function() {
   });
 
   it('POST /authenticate', function (done) {
-    test.app.post('/authenticate')
+    test.agent.post('/authenticate')
       .set('Content-Type', 'application/json')
       .send({
         username: 'admin',
@@ -84,7 +84,7 @@ describe('Authentication/Authorization', function() {
   });
 
   it('POST /authenticate non existing user', function (done) {
-    test.app.post('/authenticate')
+    test.agent.post('/authenticate')
       .set('Content-Type', 'application/json')
       .send({
         username: 'admin',
@@ -100,7 +100,7 @@ describe('Authentication/Authorization', function() {
   });
 
   it('GET /data/ip_data authorize', function (done) {
-    test.app.get('/data/ip_data')
+    test.agent.get('/data/ip_data')
       .set('Content-Type', 'application/json')
       .set('Authorization', 'Bearer ' + token)
       .expect([{ip_data:'192.168.100.128/25', host_data:'192.168.12.1', macaddr_data:'08:00:2b:01:02:03'}])
@@ -109,7 +109,7 @@ describe('Authentication/Authorization', function() {
   });
 
   it('GET /data/json_data wrong token', function (done) {
-    test.app.get('/data/json_data')
+    test.agent.get('/data/json_data')
       .set('Content-Type', 'application/json')
       .set('Authorization', 'Bearer aaabbb7ead31cf6ff2df96a101f8bc35e3553e449a43e85d19af156e1f7638b7')
       .expect({"message": "Token does not exist"})
@@ -118,7 +118,7 @@ describe('Authentication/Authorization', function() {
   });
 
   it('POST /data/ip_data authorize', function (done) {
-    test.app.post('/data/ip_data')
+    test.agent.post('/data/ip_data')
       .set('Content-Type', 'application/json')
       .set('Authorization', 'Bearer ' + token)
       .send('{"ip_data":"192.168.100.128/25"}')
@@ -128,7 +128,7 @@ describe('Authentication/Authorization', function() {
   });
 
   it('POST /data/json_data wrong token', function (done) {
-    test.app.post('/data/json_data')
+    test.agent.post('/data/json_data')
       .set('Content-Type', 'application/json')
       .set('Authorization', 'Bearer aaabbb7ead31cf6ff2df96a101f8bc35e3553e449a43e85d19af156e1f7638b7')
       .send('{"json_data":{"toto":"blabla"}}')
@@ -138,17 +138,16 @@ describe('Authentication/Authorization', function() {
   });
 
   it('PATCH /data/string_data authorize', function (done) {
-    test.app.patch('/data/string_data?char_short=eq.a')
+    test.agent.patch('/data/string_data?char_short=eq::a')
       .set('Content-Type', 'application/json')
       .set('Authorization', 'Bearer ' + token)
       .send('{"char_short":"b"}')
-      .expect(log)
       .expect(200)
       .end(done);
   });
 
   it('PATCH /data/string_data wrong token', function (done) {
-    test.app.patch('/data/string_data?char_short=eq.a')
+    test.agent.patch('/data/string_data?char_short=eq::a')
       .set('Content-Type', 'application/json')
       .set('Authorization', 'Bearer aaabbb7ead31cf6ff2df96a101f8bc35e3553e449a43e85d19af156e1f7638b7')
       .send('{"char_short":"b"}')
@@ -158,15 +157,14 @@ describe('Authentication/Authorization', function() {
   });
 
   it('DELETE /data/string_data authorize', function (done) {
-    test.app.delete('/data/string_data?char_short=eq.a')
+    test.agent.delete('/data/string_data?char_short=eq::a')
       .set('Authorization', 'Bearer ' + token)
-      .expect(log)
       .expect(200)
       .end(done);
   });
 
   it('DELETE /data/string_data wrong token', function (done) {
-    test.app.delete('/data/string_data?char_short=eq.a')
+    test.agent.delete('/data/string_data?char_short=eq::a')
       .set('Authorization', 'Bearer aaabbb7ead31cf6ff2df96a101f8bc35e3553e449a43e85d19af156e1f7638b7')
       .expect({"message": "Token does not exist"})
       .expect(401)
