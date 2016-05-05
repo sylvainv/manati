@@ -30,11 +30,17 @@ $$ LANGUAGE plpgsql;
 
 -- Timestamps update trigger
 CREATE OR REPLACE FUNCTION manati_utils.notify_on_change() RETURNS trigger AS $$
+DECLARE _data json;
 BEGIN
-  raise notice '%_%_%', lower(TG_OP), TG_TABLE_SCHEMA, TG_TABLE_NAME;
+  IF (TG_OP = 'DELETE') THEN
+      _data = row_to_json(OLD);
+  ELSE
+      _data = row_to_json(NEW);
+  END IF;
+
   PERFORM pg_notify(
-    format('%s_%s_%s', lower(TG_OP), TG_TABLE_SCHEMA, TG_TABLE_NAME),
-    format('{"table":%s,"schema":%s,"type":"%s","data":%s}', TG_TABLE_NAME, TG_TABLE_SCHEMA, lower(TG_OP), NEW::text)
+    format('%s__%s__%s', lower(TG_OP), TG_TABLE_SCHEMA, TG_TABLE_NAME),
+    _data::text
   );
 
   RETURN NULL; -- result is ignored since this is an AFTER trigger
@@ -61,7 +67,7 @@ BEGIN
   END IF;
 
   -- format channel name
-  _channel := format('%s_%s_%s', lower(type), _schema_name, _target);
+  _channel := format('%s__%s__%s', lower(type), _schema_name, _target);
 
   return _channel;
 END;

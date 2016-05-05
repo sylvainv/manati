@@ -64,6 +64,10 @@ describe('Pub/Sub', function() {
         return test.load(test.rootPath + 'test/integration/bootstrap.sql');
       })
       .then(function() {
+        // to receive notification of successfull watch
+        return test.app.db.query("SELECT manati_utils.notify_changes($1)", ['json_data']);
+      })
+      .then(() => {
         done();
       })
       .catch((error) => {
@@ -72,33 +76,53 @@ describe('Pub/Sub', function() {
       });
   });
 
-  it('Websocket connect', function (done) {
+  it('Listen to insert channel', function (done) {
     var port = test.app.server.address().port;
     var ws = new WebSocket('ws://localhost:' + port);
 
     ws.on('open', function onOpen() {
-      // to receive notification of successfull watch
-      test.app.db.query("SELECT manati_utils.notify_changes($1)", ['json_data']).then(function() {
-        ws.on('message', function onMessage(data) {
+      ws.once('message', function onMessage(message) {
+        message = JSON.parse(message);
 
-          var data = JSON.parse(data);
-          console.log(data);
+        // if the action is listen, then insert data to test the notification
+        if (message.action !== undefined && message.action === 'listen') {
+          ws.once('message', function onMessage(data) {
+            data = JSON.parse(data);
 
-          if (data.type === 'success') {
-            test.app.db.query('INSERT INTO json_data (json_data, jsonb_data) VALUES ($1, $2)', [{'stuff': 'ss'}, {'www': 'www'}]);
-          }
-        });
+            try {
+              data.should.have.keys(['schema', 'table', 'data', 'action']);
+              data.action.should.be.eq('insert');
+              data.schema.should.be.eq('public');
+              data.table.should.be.eq('jon_data');
+              data.data.should.be.deep.eq({json_data: {'stuff': 'ss'}, jsonb_data: {'www': 'www'}});
+            }
+            catch(error) {
+              return ws.emit('error', error);
+            }
 
-        ws.send(JSON.stringify({
-          action: 'listen',
-          target: 'json_data',
-          type: 'insert'
-        }));
+            ws.close();
+            done();
+          });
+
+          test.app.db.query('INSERT INTO json_data (json_data, jsonb_data) VALUES ($1, $2)', [{'stuff': 'ss'}, {'www': 'www'}]);
+        }
       });
+
+      ws.send(JSON.stringify({
+        action: 'listen',
+        target: 'json_data',
+        type: 'insert'
+      }));
+
+      ws.on('error', function(err) {
+        ws.close();
+        done();
+      })
     });
   });
 
   after(function (done) {
+    test.app._pubsub.stop();
     test.stop(done);
   });
 });

@@ -97,7 +97,7 @@ class App {
   }
 
   initSocket() {
-    require('./lib/pubsub.js')(this.websocketServer, this.db, this.dsn, this.logger);
+    this._pubsub = require('./lib/pubsub.js')(this.websocketServer, this.db, this.dsn, this.logger);
   }
 
   init(options) {
