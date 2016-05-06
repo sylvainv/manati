@@ -93,15 +93,17 @@ describe('Pub/Sub', function() {
               data.should.have.keys(['schema', 'table', 'data', 'action']);
               data.action.should.be.eq('insert');
               data.schema.should.be.eq('public');
-              data.table.should.be.eq('jon_data');
+              data.table.should.be.eq('json_data');
               data.data.should.be.deep.eq({json_data: {'stuff': 'ss'}, jsonb_data: {'www': 'www'}});
             }
             catch(error) {
               return ws.emit('error', error);
             }
 
-            ws.close();
-            done();
+            ws.on('close', () => {
+              done();
+            });
+            ws.close(1001);
           });
 
           test.app.db.query('INSERT INTO json_data (json_data, jsonb_data) VALUES ($1, $2)', [{'stuff': 'ss'}, {'www': 'www'}]);
@@ -113,11 +115,31 @@ describe('Pub/Sub', function() {
         target: 'json_data',
         type: 'insert'
       }));
+    });
+  });
 
-      ws.on('error', function(err) {
-        ws.close();
-        done();
-      })
+  it('Listen to non existing table', function (done) {
+    var port = test.app.server.address().port;
+    var ws = new WebSocket('ws://localhost:' + port);
+
+    ws.on('open', function onOpen() {
+      ws.on('message', function onMessage(message) {
+        message = JSON.parse(message);
+
+        message.should.have.key('error');
+        message.error.should.be.eq('relation "jsn_data" does not exist');
+
+        ws.on('close', () => {
+          done();
+        });
+        ws.close(1001);
+      });
+
+      ws.send(JSON.stringify({
+        action: 'listen',
+        target: 'jsn_data',
+        type: 'insert'
+      }));
     });
   });
 
