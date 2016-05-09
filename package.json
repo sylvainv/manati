@@ -5,7 +5,7 @@
   "main": "api.js",
   "scripts": {
     "test": "mocha test/unit/lib/ --require test/unit/bootstrap.js",
-    "integration": "mocha test/integration/data/*.js  test/integration/authentication/*.js --require test/integration/bootstrap.js -t 10000",
+    "integration": "mocha test/integration/data/*.js  test/integration/authentication/*.js test/integration/pubsub/index.js --require test/integration/bootstrap.js -t 10000",
     "coverage": "./node_modules/istanbul-harmony/lib/cli.js cover node_modules/mocha/bin/_mocha -- test/unit/lib/* --require test/unit/bootstrap.js"
   },
   "config": {
