@@ -43,7 +43,7 @@ class ManatiIntegrationTest {
     this.db = pgp(this.dsn);
 
     // create db
-    console.log('Creating database ' + this.databaseName);
+    console.info('Creating database ' + this.databaseName);
     return cp.exec('createdb --host=localhost --port=' + self.port + ' --no-password --username=' + process.env.PGUSER + ' ' + this.databaseName)
       .then(() => {
         if (self.sqlFile === undefined) {

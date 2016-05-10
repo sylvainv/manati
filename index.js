@@ -149,7 +149,7 @@ class App {
 
   start(port) {
     this.server.listen(port, () => {
-      console.log('Listening on %j', this.server.address());
+      console.info('Listening on %j', this.server.address());
     });
   }
 }

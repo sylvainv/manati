@@ -5,7 +5,7 @@
   "main": "api.js",
   "scripts": {
     "test": "mocha test/unit/lib/ --require test/unit/bootstrap.js",
-    "integration": "mocha test/integration/data/*.js  test/integration/authentication/*.js test/integration/pubsub/index.js --require test/integration/bootstrap.js -t 10000",
+    "integration": "mocha test/integration/data/*.js  test/integration/authentication/*.js test/integration/pubsub/index.js --require test/integration/bootstrap.js -t 100000",
     "coverage": "./node_modules/istanbul-harmony/lib/cli.js cover node_modules/mocha/bin/_mocha -- test/unit/lib/* --require test/unit/bootstrap.js"
   },
   "config": {
@@ -23,7 +23,7 @@
     "node": ">= 5.0.0"
   },
   "author": "sylvain.verly@gmail.com",
-  "license": "GNU AFFERO GENERAL PUBLIC LICENSE",
+  "license": "AGPL-3.0",
   "dependencies": {
     "bluebird": "^3.3.5",
     "boom": "^3.1.1",
@@ -43,8 +43,6 @@
     "chai": "^3.5.0",
     "chance": "^1.0.1",
     "child-process-es6-promise": "^1.0.0",
-    "istanbul": "^0.4.3",
-    "istanbul-harmony": "^0.3.16",
     "mocha": "^2.4.5",
     "socket.io": "^1.4.5",
     "sprintf-js": "^1.0.3",

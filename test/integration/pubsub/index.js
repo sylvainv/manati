@@ -41,6 +41,7 @@ const sprintf = require("sprintf-js").sprintf;
 const http = require('http');
 const net = require('net');
 const WebSocket = require('ws');
+const Bluebird = require('bluebird');
 
 var log = function (res) {
   console.log(res);
@@ -85,29 +86,31 @@ describe('Pub/Sub', function() {
         message = JSON.parse(message);
 
         // if the action is listen, then insert data to test the notification
-        if (message.action !== undefined && message.action === 'listen') {
-          ws.once('message', function onMessage(data) {
-            data = JSON.parse(data);
+        message.should.have.keys(['action', 'channel']);
+        message.action.should.be.eq('listen');
+        message.channel.should.be.eq('insert__public__json_data');
 
-            try {
-              data.should.have.keys(['schema', 'table', 'data', 'action']);
-              data.action.should.be.eq('insert');
-              data.schema.should.be.eq('public');
-              data.table.should.be.eq('json_data');
-              data.data.should.be.deep.eq({json_data: {'stuff': 'ss'}, jsonb_data: {'www': 'www'}});
-            }
-            catch(error) {
-              return ws.emit('error', error);
-            }
+        ws.once('message', function onMessage(data) {
+          data = JSON.parse(data);
 
-            ws.on('close', () => {
-              done();
-            });
-            ws.close(1001);
+          try {
+            data.should.have.keys(['schema', 'table', 'data', 'action']);
+            data.action.should.be.eq('insert');
+            data.schema.should.be.eq('public');
+            data.table.should.be.eq('json_data');
+            data.data.should.be.deep.eq({json_data: {'stuff': 'ss'}, jsonb_data: {'www': 'www'}});
+          }
+          catch(error) {
+            return ws.emit('error', error);
+          }
+
+          ws.on('close', () => {
+            done();
           });
+          ws.close(1001);
+        });
 
-          test.app.db.query('INSERT INTO json_data (json_data, jsonb_data) VALUES ($1, $2)', [{'stuff': 'ss'}, {'www': 'www'}]);
-        }
+        test.app.db.query('INSERT INTO json_data (json_data, jsonb_data) VALUES ($1, $2)', [{'stuff': 'ss'}, {'www': 'www'}]);
       });
 
       ws.send(JSON.stringify({
