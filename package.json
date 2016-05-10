@@ -1,6 +1,6 @@
 {
   "name": "pg-manati",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "REST for PostgreSQL",
   "main": "api.js",
   "scripts": {
@@ -34,7 +34,7 @@
     "lodash": "^4.0.0",
     "pg-promise": "^4.0.4",
     "sprintf-js": "^1.0.3",
-    "squel": "^4.2.2",
+    "squel": "4.2.2",
     "ws": "^1.1.0"
   },
   "devDependencies": {
