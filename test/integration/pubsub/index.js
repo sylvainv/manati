@@ -146,6 +146,82 @@ describe('Pub/Sub', function() {
     });
   });
 
+  it('Several socket listening to insert channel', function (done) {
+    var port = test.app.server.address().port;
+    var ws1 = new WebSocket('ws://localhost:' + port);
+    var ws2 = new WebSocket('ws://localhost:' + port);
+
+    var promise1 = new Bluebird((resolve, reject) => {
+      ws2.on('open', function onOpen() {
+        ws2.once('message', function onMessage(message) {
+          message = JSON.parse(message);
+
+          message.should.have.keys(['action', 'channel']);
+          message.action.should.be.eq('listen');
+          message.channel.should.be.eq('insert__public__json_data');
+
+          // listen for other message
+          ws2.once('message', function onMessage(data) {
+            data = JSON.parse(data);
+            data.data.should.be.deep.eq({json_data: {'stuff': 'tt'}, jsonb_data: {'www': 'zzz'}});
+
+            // close socket 2
+            ws2.on('close', resolve);
+            ws2.close(1001);
+          });
+
+          // insert a new record
+          test.app.db.query('INSERT INTO json_data (json_data, jsonb_data) VALUES ($1, $2)', [{'stuff': 'tt'}, {'www': 'zzz'}]);
+        });
+      });
+    });
+
+    var promise2 = new Bluebird((resolve, reject) => {
+      ws1.on('open', function onOpen() {
+        ws1.once('message', function onMessage(message) {
+          message = JSON.parse(message);
+
+          message.should.have.keys(['action', 'channel']);
+          message.action.should.be.eq('listen');
+          message.channel.should.be.eq('insert__public__json_data');
+
+          ws1.once('message', function onMessage(data) {
+            data = JSON.parse(data);
+            data.data.should.be.deep.eq({json_data: {'stuff': 'ss'}, jsonb_data: {'www': 'www'}});
+
+            ws1.once('message', function onMessage(data) {
+              data = JSON.parse(data);
+              data.data.should.be.deep.eq({json_data: {'stuff': 'tt'}, jsonb_data: {'www': 'zzz'}});
+
+              // close socket 1
+              ws1.on('close', resolve);
+              ws1.close(1001);
+            });
+
+            // start listen on other socket as well
+            ws2.send(JSON.stringify({
+              action: 'listen',
+              target: 'json_data',
+              type: 'insert'
+            }));
+          });
+
+          test.app.db.query('INSERT INTO json_data (json_data, jsonb_data) VALUES ($1, $2)', [{'stuff': 'ss'}, {'www': 'www'}]);
+        });
+
+        ws1.send(JSON.stringify({
+          action: 'listen',
+          target: 'json_data',
+          type: 'insert'
+        }));
+      });
+    });
+
+    Bluebird.all([promise1, promise2]).then(() => {
+      done();
+    });
+  });
+
   after(function (done) {
     test.app._pubsub.stop();
     test.stop(done);
