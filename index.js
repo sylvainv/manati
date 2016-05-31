@@ -29,8 +29,13 @@ class App {
   constructor(dsn, logLevel) {
     this.dsn = dsn;
     this.koa = require('koa')();
+    this.server = require('http').createServer(this.koa.callback());
+    this.db = pgPromise(this.dsn);
 
     this.initLogger(logLevel);
+
+    this.plugins = [];
+    this.routers = {};
   }
 
   initLogger(logLevel) {
@@ -43,48 +48,46 @@ class App {
     ]});
   }
 
-  initAuthorization(dataRouter, options) {
-    options = _.defaults({
-      parseHeader: function (header) {
-        return header.split('Bearer ')[1];
-      },
-      buildAuthorizationQuery: function (authorization) {
-        // make sure authorization matches a specific pattern to avoid injection
-        if (!authorization.match(/[a-f0-9]{64}/)) {
-          throw Boom.badRequest('Invalid token');
-        }
-
-        return {
-          text: 'select manati_auth.authorize($1);',
-          values: [authorization]
-        }
-      }
-    }, options);
-
-    dataRouter.use(function* authorize(next) {
-      var authorization = options.parseHeader(this.request.get('Authorization'));
-      this.request.authorizationQuery = options.buildAuthorizationQuery(authorization);
-
-      yield next;
+  addPlugin(plugin, attachRouter, options) {
+    this.plugins.push({
+      plugin: plugin({
+        db: this.db,
+        logger: this.logger
+      }, options),
+      router: attachRouter
     });
   }
 
+  loadPlugins() {
+    this.plugins.forEach(value => {
+      var router;
+      if (value.router !== undefined) {
+        if (this.routers[value.router] === undefined) {
+          throw new Error('Router ' + value.router + ' does not exist, available routers are: ' + _.keys(this.routers).join(', '));
+        }
+        router = this.routers[value.router];
+      }
+      else {
+        router = this.koa;
+      }
+
+      if (value.position === 'first') {
+        router.use(function* (next) {
+          yield value.plugin;
+          yield next;
+        });
+      }
+      else {
+        router.use(value.plugin);
+      }
+    })
+  }
+
   initRouter() {
-    this.db = pgPromise(this.dsn);
+    this.routers.data = require('./lib/router/data')(this.db, this.logger);
 
-    var data = require('./lib/router/data')(this.db, this.logger);
-
-    if (this.options.authentication !== undefined) {
-      var authentication = require('./lib/router/authentication')(this.db, this.logger, this.options['authentication']);
-      this.koa.use(authentication.routes());
-    }
-
-    if (this.options.authorization !== undefined) {
-      this.initAuthorization(data, this.options.authorization);
-    }
-
-    this.koa.use(data.routes());
-    this.koa.use(data.allowedMethods({
+    this.koa.use(this.routers.data.routes());
+    this.koa.use(this.routers.data.allowedMethods({
       throw: true,
       notImplemented: () => new Boom.notImplemented(),
       methodNotAllowed: () => new Boom.methodNotAllowed()
@@ -96,6 +99,12 @@ class App {
 
     // PARSE BODY
     this.koa.use(require('koa-parse-json')());
+
+    // SETUP PRE QUERIES, can be used in plugins
+    this.koa.use(function* (next) {
+      this.request.dbqueries = [];
+      yield next;
+    });
 
     var koa = this.koa;
     var self = this;
@@ -115,10 +124,15 @@ class App {
     });
 
     this.initRouter();
+
+    // load the plugins if any
+    this.loadPlugins();
   }
 
-  start(port) {
-    this.koa.listen(port);
+  start(port, host) {
+    this.server.listen(port, host, () => {
+      this.logger.info('Listening on %j', this.server.address());
+    });
   }
 }
 

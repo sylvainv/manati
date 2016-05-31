@@ -31,7 +31,7 @@ class ManatiIntegrationTest {
     this.port = process.env.PGPORT || 5432;
   }
 
-  start(options) {
+  start(options, plugins) {
     var self = this;
 
     this.db = pgp(this.dsn);
@@ -47,6 +47,13 @@ class ManatiIntegrationTest {
       })
       .then(() => {
         self.app = require(self.rootPath + 'index.js')(this.dsn, 'fatal');
+
+        if (plugins !== undefined) {
+          plugins.forEach(value => {
+            self.app.addPlugin(value.plugin, value.attachRouter, value.options);
+          });
+        }
+
         self.app.init(options);
 
         // wrap the app for testing

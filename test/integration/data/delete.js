@@ -42,6 +42,7 @@ describe('DELETE /data/:table', function (done) {
       })
       .catch((error) => {
         console.error(`exec error: ${error}`);
+        console.error(error.stack);
         done();
       });
   });

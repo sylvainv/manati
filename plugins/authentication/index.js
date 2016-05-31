@@ -20,12 +20,14 @@
 var _ = require('lodash');
 var Boom = require('boom');
 
-module.exports = function(db, logger, options) {
+module.exports = function (dependencies, options) {
+  var db = dependencies.db;
+
   var router = require('koa-router')();
 
   var options = _.defaults({
     procedure: "manati_auth.create_token($1, $2)",
-    handler: function(data) {
+    handler: function (data) {
       return {
         "token": data[0]['create_token']
       };
@@ -38,5 +40,5 @@ module.exports = function(db, logger, options) {
     this.body = yield db.any('SELECT ' + options.procedure, [params.username, params.password]).then(options.handler);
   });
 
-  return router;
+  return router.routes();
 };
