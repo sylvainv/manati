@@ -43,6 +43,10 @@ module.exports = function (dependencies, options) {
   return function* authorize(next) {
     var authorization = options.parseHeader(this.request.get('Authorization'));
 
+    if (authorization === undefined) {
+      this.throw(Boom.unauthorized('Please provide a token', 'Bearer'));
+    }
+
     // put this queries in the pre queries, will be executed before the queries in data
     this.request.dbqueries.push(options.buildAuthorizationQuery(authorization));
 

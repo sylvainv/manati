@@ -37,7 +37,6 @@
 var test = new ManatiIntegrationTest();
 const chance = require('chance').Chance();
 const async = require('async');
-const sprintf = require("sprintf-js").sprintf;
 
 var log = function (res) {
   console.log(res.body);
@@ -49,7 +48,7 @@ describe('Authentication/Authorization', function() {
   before(function (done) {
     test.start({}, [
       {plugin: require(test.rootPath + 'plugins/authentication/index.js')},
-      {plugin: require(test.rootPath + 'plugins/authorization/index.js'), attachRouter: 'data'}
+      {plugin: 'authorization', attachRouter: 'data'}
     ])
       .then(() => {
         return test.load(test.rootPath + 'sql/utils.sql');

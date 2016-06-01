@@ -20,6 +20,7 @@
 const chance = require('chance').Chance();
 const cp = require('child-process-es6-promise');
 const pgp = require('pg-promise')();
+const _ = require('lodash');
 
 class ManatiIntegrationTest {
   constructor(sqlFile) {
@@ -34,6 +35,10 @@ class ManatiIntegrationTest {
   start(options, plugins) {
     var self = this;
 
+    var options = _.defaults(options || {}, {
+      logLevel: 'fatal'
+    });
+
     this.db = pgp(this.dsn);
 
     // create db
@@ -46,7 +51,7 @@ class ManatiIntegrationTest {
         return self.load(self.sqlFile);
       })
       .then(() => {
-        self.app = require(self.rootPath + 'index.js')(this.dsn, 'fatal');
+        self.app = require(self.rootPath + 'index.js')(this.dsn);
 
         if (plugins !== undefined) {
           plugins.forEach(value => {

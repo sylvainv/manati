@@ -19,36 +19,28 @@
 
 var _ = require('lodash');
 var Boom = require('boom');
-
+var path = require('path');
 
 var pgPromise = require('pg-promise')({
   'pgFormatting': true
 });
 
 class App {
-  constructor(dsn, logLevel) {
+  constructor(dsn) {
     this.dsn = dsn;
     this.koa = require('koa')();
     this.server = require('http').createServer(this.koa.callback());
     this.db = pgPromise(this.dsn);
 
-    this.initLogger(logLevel);
-
     this.plugins = [];
     this.routers = {};
   }
 
-  initLogger(logLevel) {
-    var bunyan = require('bunyan');
-    this.logger = bunyan.createLogger({name: "manati", streams: [
-      {
-        level: logLevel || 'info',
-        stream: process.stdout            // log INFO and above to stdout
-      }
-    ]});
-  }
-
   addPlugin(plugin, attachRouter, options) {
+    if (typeof plugin !== "function") {
+      plugin = require(path.resolve(path.join(__dirname,'plugins', plugin)));
+    }
+
     this.plugins.push({
       plugin: plugin({
         db: this.db,
@@ -71,15 +63,7 @@ class App {
         router = this.koa;
       }
 
-      if (value.position === 'first') {
-        router.use(function* (next) {
-          yield value.plugin;
-          yield next;
-        });
-      }
-      else {
-        router.use(value.plugin);
-      }
+      router.use(value.plugin);
     })
   }
 
@@ -94,8 +78,41 @@ class App {
     }));
   }
 
+  initDefaultLogger(streams, logLevel) {
+    if (streams === undefined || !_.isArray(streams) || (_.isArray(streams) && streams.length === 0)) {
+      streams = [{
+        level: logLevel || 'info',
+        stream: process.stdout            // log INFO and above to stdout
+      }
+      ];
+    }
+    this.logger = require('bunyan').createLogger({name: "manati", streams: streams});
+  }
+
+  /**
+   *
+   * @param options an object to pass options
+   *   logger: if you don't want to use the default logger
+   */
   init(options) {
     this.options = options || {};
+    _.defaults(this.options, {logLevel: 'info', logRequest: true});
+
+    this.initDefaultLogger(this.options.logStreams, this.options.logLevel);
+
+    // set logger in the koa context
+    var logger = this.logger;
+    this.koa.use(function* (next) {
+      this.logger = logger;
+      yield next;
+    });
+
+    if (this.options.logRequest) {
+      this.koa.use(function* (next) {
+        this.logger.info('%s %s', this.request.method.toUpperCase(), this.request.path);
+        yield next;
+      });
+    }
 
     // PARSE BODY
     this.koa.use(require('koa-parse-json')());
@@ -107,13 +124,12 @@ class App {
     });
 
     var koa = this.koa;
-    var self = this;
     // ERROR HANDLER
     this.koa.use(function* errorHandler(next) {
       try {
         yield next;
       } catch (err) {
-        self.logger.error(err);
+        this.logger.error(err);
 
         var error = require('./lib/errorHandler')(err);
 
