@@ -19,9 +19,11 @@
 
 var _ = require('lodash');
 var Boom = require('boom');
+var path = require('path');
 
 module.exports = function (dependencies, options) {
   var db = dependencies.db;
+  var pgp = dependencies.pgp;
 
   options = _.defaults({
     parseHeader: function (header) {
@@ -40,7 +42,7 @@ module.exports = function (dependencies, options) {
     }
   }, options);
 
-  return function* authorize(next) {
+  var authorize = function* authorize(next) {
     var authorization = options.parseHeader(this.request.get('Authorization'));
 
     if (authorization === undefined) {
@@ -51,6 +53,14 @@ module.exports = function (dependencies, options) {
     this.request.dbqueries.push(options.buildAuthorizationQuery(authorization));
 
     yield next;
+  };
+
+  return {
+    name: 'authorization',
+    middleware: authorize,
+    setup: function () {
+      return db.any(new pgp.QueryFile(path.join(__dirname, 'sql', 'setup.sql')));
+    }
   };
 };
 

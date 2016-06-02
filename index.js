@@ -20,13 +20,14 @@
 var _ = require('lodash');
 var Boom = require('boom');
 var path = require('path');
+var Bluebird = require('bluebird');
 
 var pgPromise = require('pg-promise')({
   'pgFormatting': true
 });
 
 class App {
-  constructor(dsn) {
+  constructor(dsn, options) {
     this.dsn = dsn;
     this.koa = require('koa')();
     this.server = require('http').createServer(this.koa.callback());
@@ -34,36 +35,57 @@ class App {
 
     this.plugins = [];
     this.routers = {};
+
+    this.init(options);
   }
 
   addPlugin(plugin, attachRouter, options) {
+    // if the plugin is not a function, then we should load the plugins from the list of our plugins
     if (typeof plugin !== "function") {
       plugin = require(path.resolve(path.join(__dirname,'plugins', plugin)));
     }
 
-    this.plugins.push({
-      plugin: plugin({
-        db: this.db,
-        logger: this.logger
-      }, options),
-      router: attachRouter
-    });
+    this.plugins.push(plugin({
+      db: this.db,
+      pgp: pgPromise,
+      logger: this.logger
+    }, options));
   }
 
   loadPlugins() {
+    this.logger.info('Loading plugins');
     this.plugins.forEach(value => {
+      // select the desired router on which to attach this middleware
       var router;
-      if (value.router !== undefined) {
-        if (this.routers[value.router] === undefined) {
-          throw new Error('Router ' + value.router + ' does not exist, available routers are: ' + _.keys(this.routers).join(', '));
+      if (value.attachRouter !== undefined) {
+        if (this.routers[value.attachRouter] === undefined) {
+          throw new Error('Router ' + value.attachRouter + ' does not exist, available routers are: ' + _.keys(this.routers).join(', '));
         }
-        router = this.routers[value.router];
+        router = this.routers[value.attachRouter];
       }
       else {
         router = this.koa;
       }
 
-      router.use(value.plugin);
+      router.use(value.middleware);
+    });
+  }
+
+  setup() {
+    this.logger.info("Setting up manati on the database");
+    return Bluebird.all([
+      Bluebird.mapSeries(['utils.sql'], (file) => {
+        this.logger.info("Setting up sql with file: %s", file);
+        return this.db.any(pgPromise.QueryFile(path.join(__dirname, 'sql', file)))
+      }),
+      Bluebird.mapSeries(this.plugins, (plugin) => {
+        this.logger.info("Setting up %s", plugin.name);
+        return plugin.setup();
+      })
+    ])
+    .catch(error => {
+      this.logger.error(error);
+      throw new Error('Database error when setting up, error: ' + error.message);
     })
   }
 
@@ -147,7 +169,8 @@ class App {
 
   start(port, host) {
     this.server.listen(port, host, () => {
-      this.logger.info('Listening on %j', this.server.address());
+      let details = this.server.address();
+      this.logger.info('Listening on %s address http://%s:%s', details.family, details.address, details.port );
     });
   }
 }

@@ -19,10 +19,7 @@
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE SCHEMA IF NOT EXISTS manati_auth AUTHORIZATION manati_admin;
-
-
-SET ROLE manati_admin;
+CREATE SCHEMA IF NOT EXISTS manati_auth;
 
 -- Create a basic role to be used for internal system authorization, to make sure those roles cannot perform actions not required
 CREATE OR REPLACE FUNCTION manati_auth.create_basic_role(_role_name text) returns text as $$
@@ -134,39 +131,9 @@ BEGIN
 END;
 $$ language 'plpgsql' SECURITY DEFINER;
 
---- authorize
-CREATE OR REPLACE FUNCTION manati_auth.authorize_token(_token text) RETURNS text AS
-$$
-DECLARE _role text;
-BEGIN
-  SELECT u.role INTO _role FROM manati_auth.tokens t JOIN manati_auth.users u ON u.username = t.username WHERE t.token = _token;
-
-  IF NOT FOUND THEN
-    raise invalid_authorization_specification using message = 'Token does not exist';
-  END IF;
-
-  return _role;
-END;
-$$ language 'plpgsql' SECURITY DEFINER;
-
---- authorize
-CREATE OR REPLACE FUNCTION manati_auth.authorize(_token text) RETURNS void AS
-$$
-DECLARE _role text;
-BEGIN
-  _role := manati_auth.authorize_token(_token);
-
-  -- Expire old tokens
-  EXECUTE 'SET SESSION ROLE ' || _role;
-END;
-$$ language 'plpgsql' SECURITY INVOKER;
-
-
-INSERT INTO manati_auth.users (username, password) VALUES ('admin', 'admin');
+INSERT INTO manati_auth.users (username, password) VALUES ('admin', 'admin') ON CONFLICT DO NOTHING;
 
 GRANT USAGE on SCHEMA manati_auth TO manati_user;
 GRANT EXECUTE on ALL FUNCTIONS in SCHEMA manati_auth TO manati_user;
-
-SET ROLE manati_user;
 
 COMMIT;

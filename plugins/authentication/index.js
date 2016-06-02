@@ -18,10 +18,11 @@
 "use strict";
 
 var _ = require('lodash');
-var Boom = require('boom');
+var path = require('path');
 
 module.exports = function (dependencies, options) {
   var db = dependencies.db;
+  var pgp = dependencies.pgp;
 
   var router = require('koa-router')();
 
@@ -40,5 +41,11 @@ module.exports = function (dependencies, options) {
     this.body = yield db.any('SELECT ' + options.procedure, [params.username, params.password]).then(options.handler);
   });
 
-  return router.routes();
+  return {
+    name: 'authentication',
+    middleware: router.routes(),
+    setup: function() {
+      return db.any(new pgp.QueryFile(path.join(__dirname, 'sql', 'setup.sql')));
+    }
+  };
 };

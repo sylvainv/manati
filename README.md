@@ -36,13 +36,17 @@ app.addPlugin('authentication'));
 // add authentication middleware for all routes in the data router (route starting with /data)
 app.addPlugin('authorization'), 'data');
 
-app.init({
-  logLevel: 'fatal'|'error'|'warn'|'info'|'debug'| // the log level used by the bunyan logger (default 'info'), see https://github.com/trentm/node-bunyan for more info
-  logRequest: true|false // whether to log request, using INFO logging level
-  logStreams: [] // an array of log streams, see https://github.com/trentm/node-bunyan for more information
+// this will execute the setup script on every start up, you can choose
+app.setup().then(() => {
+  app.init({
+    logLevel: 'fatal'|'error'|'warn'|'info'|'debug'| // the log level used by the bunyan logger (default 'info'), see https://github.com/trentm/node-bunyan for more info
+    logRequest: true|false // whether to log request, using INFO logging level
+    logStreams: [] // an array of log streams, see https://github.com/trentm/node-bunyan for more information
+  });
+  app.start(3000);
 });
 
-app.start(3000);
+
 ```
 
 [Check our wiki](https://github.com/sylvainv/pg-manati/wiki) for more information!
