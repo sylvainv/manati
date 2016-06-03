@@ -26,6 +26,7 @@
   "author": "sylvain.verly@gmail.com",
   "license": "AGPL-3.0",
   "dependencies": {
+    "bluebird": "^3.4.0",
     "boom": "^3.1.1",
     "bunyan": "^1.5.1",
     "config": "^1.19.0",
