@@ -27,7 +27,7 @@ var pgPromise = require('pg-promise')({
 });
 
 class App {
-  constructor(dsn, options) {
+  constructor(dsn, logger) {
     this.dsn = dsn;
     this.koa = require('koa')();
     this.server = require('http').createServer(this.koa.callback());
@@ -36,10 +36,15 @@ class App {
     this.plugins = [];
     this.routers = {};
 
-    this.init(options);
+    if (logger === undefined) {
+      this.initDefaultLogger();
+    }
+    else {
+      this.logger = logger;
+    }
   }
 
-  addPlugin(plugin, attachRouter, options) {
+  addPlugin(plugin, options) {
     // if the plugin is not a function, then we should load the plugins from the list of our plugins
     if (typeof plugin !== "function") {
       plugin = require(path.resolve(path.join(__dirname,'plugins', plugin)));
@@ -100,15 +105,11 @@ class App {
     }));
   }
 
-  initDefaultLogger(streams, logLevel) {
-    if (streams === undefined || !_.isArray(streams) || (_.isArray(streams) && streams.length === 0)) {
-      streams = [{
-        level: logLevel || 'info',
-        stream: process.stdout            // log INFO and above to stdout
-      }
-      ];
-    }
-    this.logger = require('bunyan').createLogger({name: "manati", streams: streams});
+  initDefaultLogger() {
+    this.logger = require('bunyan').createLogger({name: "manati", streams: [{
+      level: process.env.LOG_LEVEL || 'info',
+      stream: process.stdout            // log INFO and above to stdout
+    }]});
   }
 
   /**
@@ -118,9 +119,6 @@ class App {
    */
   init(options) {
     this.options = options || {};
-    _.defaults(this.options, {logLevel: 'info', logRequest: true});
-
-    this.initDefaultLogger(this.options.logStreams, this.options.logLevel);
 
     // set logger in the koa context
     var logger = this.logger;

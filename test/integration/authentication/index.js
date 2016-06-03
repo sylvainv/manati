@@ -48,14 +48,8 @@ describe('Authentication/Authorization', function() {
   before(function (done) {
     test.start({}, [
       {plugin: require(test.rootPath + 'plugins/authentication/index.js')},
-      {plugin: 'authorization', attachRouter: 'data'}
+      {plugin: 'authorization'}
     ])
-      .then(() => {
-        return test.load(test.rootPath + 'sql/utils.sql');
-      })
-      .then(() => {
-        return test.load(test.rootPath + 'sql/authentication.sql');
-      })
       .then(() => {
         return test.load(test.rootPath + 'test/integration/bootstrap.sql');
       })
@@ -145,7 +139,6 @@ describe('Authentication/Authorization', function() {
       .set('Content-Type', 'application/json')
       .set('Authorization', 'Bearer ' + token)
       .send('{"char_short":"b"}')
-      .expect(log)
       .expect(200)
       .end(done);
   });
@@ -163,7 +156,6 @@ describe('Authentication/Authorization', function() {
   it('DELETE /data/string_data authorize', function (done) {
     test.app.delete('/data/string_data?char_short=eq.a')
       .set('Authorization', 'Bearer ' + token)
-      .expect(log)
       .expect(200)
       .end(done);
   });

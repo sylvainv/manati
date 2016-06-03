@@ -16,9 +16,9 @@
 -- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -- */
 
-BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE SCHEMA IF NOT EXISTS manati_auth;
 
 -- Create a basic role to be used for internal system authorization, to make sure those roles cannot perform actions not required
@@ -131,9 +131,10 @@ BEGIN
 END;
 $$ language 'plpgsql' SECURITY DEFINER;
 
-INSERT INTO manati_auth.users (username, password) VALUES ('admin', 'admin') ON CONFLICT DO NOTHING;
-
 GRANT USAGE on SCHEMA manati_auth TO manati_user;
 GRANT EXECUTE on ALL FUNCTIONS in SCHEMA manati_auth TO manati_user;
 
-COMMIT;
+INSERT INTO manati_auth.users (username, password) VALUES ('admin', 'admin') ON CONFLICT DO NOTHING;
+
+SET ROLE none;
+

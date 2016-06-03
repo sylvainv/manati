@@ -25,6 +25,7 @@ const _ = require('lodash');
 class ManatiIntegrationTest {
   constructor(sqlFile) {
     this.databaseName = 'manati_test_' + chance.hash({length: 6});
+
     this.dsn = 'postgres://' + process.env.PGUSER + '@localhost/' + this.databaseName;
     this.should = require('chai').should();
     this.sqlFile = sqlFile;
@@ -35,7 +36,7 @@ class ManatiIntegrationTest {
   start(options, plugins) {
     var self = this;
 
-    var options = _.defaults(options || {}, {
+    options = _.defaults(options || {}, {
       logLevel: 'fatal'
     });
 
@@ -55,16 +56,14 @@ class ManatiIntegrationTest {
 
         if (plugins !== undefined) {
           plugins.forEach(value => {
-            self.app.addPlugin(value.plugin, value.attachRouter, value.options);
+            self.app.addPlugin(value.plugin, value.options);
           });
         }
 
-        self.app.init(options);
-
-        // wrap the app for testing
-        self.app = require('supertest-koa-agent')(self.app.koa);
-
-        return Promise.resolve();
+        return self.app.setup().then(() => {
+          self.app.init();
+          self.app = require('supertest-koa-agent')(self.app.koa);
+        });
       });
   }
 

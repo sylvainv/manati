@@ -20,6 +20,7 @@
 var _ = require('lodash');
 var Boom = require('boom');
 var path = require('path');
+var co = require('co');
 
 module.exports = function (dependencies, options) {
   var db = dependencies.db;
@@ -42,22 +43,21 @@ module.exports = function (dependencies, options) {
     }
   }, options);
 
-  var authorize = function* authorize(next) {
-    var authorization = options.parseHeader(this.request.get('Authorization'));
-
-    if (authorization === undefined) {
-      this.throw(Boom.unauthorized('Please provide a token', 'Bearer'));
-    }
-
-    // put this queries in the pre queries, will be executed before the queries in data
-    this.request.dbqueries.push(options.buildAuthorizationQuery(authorization));
-
-    yield next;
-  };
-
   return {
     name: 'authorization',
-    middleware: authorize,
+    middleware: function* (next) {
+      var authorization = options.parseHeader(this.request.get('Authorization'));
+
+      if (authorization === undefined) {
+        this.throw(Boom.unauthorized('Please provide a token', 'Bearer'));
+      }
+
+      // put this queries in the pre queries, will be executed before the queries in data
+      this.request.dbqueries.push(options.buildAuthorizationQuery(authorization));
+
+      yield next;
+    },
+    attachRouter: 'data',
     setup: function () {
       return db.any(new pgp.QueryFile(path.join(__dirname, 'sql', 'setup.sql')));
     }
