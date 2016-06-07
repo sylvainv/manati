@@ -22,7 +22,7 @@ var Count = manati_test_require('lib/count.js');
 describe('count', function () {
   it('count::build() with simple query', function() {
     var count = new Count();
-    var query = count.build('table', {}, {"count": 'id'});
+    var query = count.build('table', {"count": 'id'}, {});
     query = query.toParam();
 
     query.text.should.be.equal("SELECT count('id') FROM table");
@@ -31,7 +31,7 @@ describe('count', function () {
 
   it('count::build() with complex query', function () {
     var count = new Count();
-    var query = count.build('table', {}, {"count": 'id', "somefield": '123'});
+    var query = count.build('table', {"count": 'id'}, {"somefield": '123'});
     query = query.toParam();
 
     query.text.should.be.equal("SELECT count('id') FROM table WHERE (somefield = $1)");
