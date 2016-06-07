@@ -61,6 +61,14 @@ GET /data/users?limit=2&name=like::J*
 [{"name": "John", "age": 22}, {"name": "Jessie", "age": 30}]
 ```
 
+### Count some users data
+```
+GET /data/count/users/name?name=like::J*
+```
+```json
+{"count":"2"}
+```
+
 ### Update some users data
 ```
 PATCH /data/users?name=eq::Jessie

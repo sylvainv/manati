@@ -1,6 +1,6 @@
 {
   "name": "pg-manati",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "REST API for PostgreSQL",
   "main": "api.js",
   "scripts": {
