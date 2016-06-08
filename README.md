@@ -10,14 +10,6 @@ This is still in heavy development and some functionality might change. Be caref
 
 ## Usage
 
-```bash
-# Add sql utils function, and a user you can use to connect to the database
-psql < sql/utils.sql
-
-# Add sql authentication tables and schema (used by the authentication plugin)
-psql < sql/authentication.sql
-```
-
 ```javascript
 var manati = require('pg-manati');
 var app = manati(
@@ -36,15 +28,20 @@ app.addPlugin('authentication'));
 // add authentication middleware for all routes in the data router (route starting with /data)
 app.addPlugin('authorization'), 'data');
 
+if (process.argv[2] === '--setup') {
+  app.setup().then(() => {
+    console.log('Installation successfull');
+    process.exit(0);
+  })
+}
+
 // this will execute the setup script on every start up, you can choose
-app.setup().then(() => {
-  app.init({
-    logLevel: 'fatal'|'error'|'warn'|'info'|'debug'| // the log level used by the bunyan logger (default 'info'), see https://github.com/trentm/node-bunyan for more info
-    logRequest: true|false // whether to log request, using INFO logging level
-    logStreams: [] // an array of log streams, see https://github.com/trentm/node-bunyan for more information
-  });
-  app.start(3000);
+app.init({
+  logLevel: 'fatal'|'error'|'warn'|'info'|'debug'| // the log level used by the bunyan logger (default 'info'), see https://github.com/trentm/node-bunyan for more info
+  logRequest: true|false // whether to log request, using INFO logging level
+  logStreams: [] // an array of log streams, see https://github.com/trentm/node-bunyan for more information
 });
+app.start(3000);
 
 
 ```
