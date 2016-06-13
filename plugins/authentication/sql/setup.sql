@@ -15,7 +15,7 @@
 -- * You should have received a copy of the GNU Affero General Public License
 -- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -- */
-
+BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -57,11 +57,7 @@ $$ LANGUAGE plpgsql;
 -- Set role
 CREATE OR REPLACE FUNCTION manati_auth.set_role() RETURNS trigger AS $$
 BEGIN
-  IF (TG_OP = 'UPDATE') THEN
-    PERFORM manati_auth.remove_basic_role(OLD.role);
-  END IF;
-
-  NEW.role = manati_auth.create_basic_role(NEW.username);
+  NEW.role = manati_auth.create_basic_role(NEW.id);
 
   RETURN NEW;
 END;
@@ -87,12 +83,11 @@ $$ LANGUAGE plpgsql;
 -------------------
 -- Create users table
 CREATE TABLE IF NOT EXISTS manati_auth.users(
-  username VARCHAR(100) NOT NULL PRIMARY KEY,
-  password VARCHAR(34) ,
-  role REGROLE NOT NULL,
-
-  CONSTRAINT valid_username CHECK (username ~ E'[a-zA-Z0-9_.-]{3,100}')
+  id VARCHAR NOT NULL PRIMARY KEY,
+  password VARCHAR(34) NOT NULL,
+  role VARCHAR NOT NULL
 );
+ALTER TABLE manati_auth.users DROP CONSTRAINT IF EXISTS valid_username;
 SELECT manati_utils.init_timestamps('manati_auth.users');
 
 -- password set trigger
@@ -106,26 +101,26 @@ CREATE TRIGGER set_role BEFORE INSERT OR UPDATE OF role ON manati_auth.users FOR
 -- Tokens table
 CREATE TABLE IF NOT EXISTS manati_auth.tokens(
   token VARCHAR(64) PRIMARY KEY,
-  username VARCHAR(100) UNIQUE REFERENCES manati_auth.users(username  ) ON DELETE CASCADE,
+  user_id VARCHAR REFERENCES manati_auth.users(id) ON DELETE CASCADE,
   -- Make sure the login is valid
   CONSTRAINT valid_token CHECK (token ~ E'[a-f0-9]{64}')
 );
 SELECT manati_utils.init_timestamps('manati_auth.tokens');
 
 --- create token
-CREATE OR REPLACE FUNCTION manati_auth.create_token(_username text, _password text) RETURNS text AS
+CREATE OR REPLACE FUNCTION manati_auth.create_token(_user_id text, _password text) RETURNS text AS
 $$
 DECLARE _token text;
 BEGIN
-  PERFORM u.username FROM manati_auth.users u WHERE u.username = _username AND u.password = crypt(_password, u.password);
+  PERFORM u.id FROM manati_auth.users u WHERE u.id = _user_id AND u.password = crypt(_password, u.password);
 
   IF NOT FOUND THEN
-    raise invalid_password using message = 'Nobody found with this username/password';
+    raise invalid_password using message = 'Nobody found with this user/password';
   END IF;
 
   -- Expire old tokens
   DELETE FROM manati_auth.tokens WHERE created_at < NOW() - INTERVAL '2 days';
-  INSERT INTO manati_auth.tokens (token, username) VALUES (manati_auth.generate_token(), _username) RETURNING token INTO _token;
+  INSERT INTO manati_auth.tokens (token, user_id) VALUES (manati_auth.generate_token(), _user_id) RETURNING token INTO _token;
 
   return _token;
 END;
@@ -134,7 +129,8 @@ $$ language 'plpgsql' SECURITY DEFINER;
 GRANT USAGE on SCHEMA manati_auth TO manati_user;
 GRANT EXECUTE on ALL FUNCTIONS in SCHEMA manati_auth TO manati_user;
 
-INSERT INTO manati_auth.users (username, password) VALUES ('admin', 'admin') ON CONFLICT DO NOTHING;
+INSERT INTO manati_auth.users (id, password) VALUES ('admin', 'admin') ON CONFLICT DO NOTHING;
 
 SET ROLE none;
 
+COMMIT;

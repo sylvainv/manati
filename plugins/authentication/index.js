@@ -38,7 +38,7 @@ module.exports = function (dependencies, options) {
   // POST
   router.post('/authenticate', function* authenticationHandler() {
     var params = this.request.body;
-    this.body = yield db.any('SELECT ' + options.procedure, [params.username, params.password]).then(options.handler);
+    this.body = yield db.any('SELECT ' + options.procedure, [params.id, params.password]).then(options.handler);
   });
 
   return {
