@@ -93,7 +93,7 @@ Content-Type application/json
 
 ### Delete some users data
 ```
-GET /data/users?name=eq::John
+DELETE /data/users?name=eq::John
 ```
 ```json
 [{"name": "John", "age": 22}]
