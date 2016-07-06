@@ -64,6 +64,16 @@ $$ LANGUAGE plpgsql;
 -- * table_name text the name of the table, can be identified with a schema, otherwise will use search_path to identify the table
 CREATE OR REPLACE FUNCTION manati_utils.init_timestamps(table_name text) RETURNS void AS $$
 BEGIN
+  PERFORM manati_utils.create_timestamps(table_name);
+  PERFORM manati_utils.disable_timestamps(table_name);
+  PERFORM manati_utils.enable_timestamps(table_name);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create timestamps columns on a table
+-- * table_name text the name of the table, can be identified with a schema, otherwise will use search_path to identify the table
+CREATE OR REPLACE FUNCTION manati_utils.create_timestamps(table_name text) RETURNS void AS $$
+BEGIN
   BEGIN
     EXECUTE 'ALTER TABLE ' || table_name || ' ADD COLUMN created_at TIMESTAMP WITH TIME ZONE';
     EXCEPTION
@@ -77,11 +87,24 @@ BEGIN
       WHEN duplicate_column THEN
         NULL;
   END;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
+
+-- Disable timestamps triggers on a table
+-- * table_name text the name of the table, can be identified with a schema, otherwise will use search_path to identify the table
+CREATE OR REPLACE FUNCTION manati_utils.disable_timestamps(table_name text) RETURNS void AS $$
+BEGIN
   EXECUTE 'DROP TRIGGER if exists set_timestamps on ' || table_name;
-  EXECUTE 'CREATE TRIGGER set_timestamps BEFORE INSERT on ' || table_name || ' FOR EACH ROW EXECUTE PROCEDURE manati_utils.set_timestamps()';
-
   EXECUTE 'DROP TRIGGER if exists update_timestamps on ' || table_name;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Enable timestamps triggers on a table
+-- * table_name text the name of the table, can be identified with a schema, otherwise will use search_path to identify the tabl
+CREATE OR REPLACE FUNCTION manati_utils.enable_timestamps(table_name text) RETURNS void AS $$
+BEGIN
+  EXECUTE 'CREATE TRIGGER set_timestamps BEFORE INSERT on ' || table_name || ' FOR EACH ROW EXECUTE PROCEDURE manati_utils.set_timestamps()';
   EXECUTE 'CREATE TRIGGER update_timestamps BEFORE UPDATE on ' ||  table_name || ' FOR EACH ROW EXECUTE PROCEDURE manati_utils.update_timestamps()';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
